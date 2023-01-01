@@ -41,37 +41,43 @@ tab = "\t"
 
 
 def preetify_variable(variable_object: Variable | None, indent: int = 1):
+    string = ""
     name = variable_object if variable_object is None else variable_object.name
-    print(f"{tab * indent}┣ Variable name: {name}")
+    string += f"{tab * indent}┣ Variable name: {name}\n"
+    return string
 
 
 def preetify_number(number_object: Number, indent: int = 1):
+    string = ""
     value = str(number_object.value) + (f".{number_object.decimal}" if number_object.decimal else "")
-    print(f"{tab * indent}┣ Value: {value}")
-    print(f"{tab * indent}┣ Negative: {number_object.is_negative}")
+    string += f"{tab * indent}┣ Value: {value}\n"
+    string += f"{tab * indent}┣ Negative: {number_object.is_negative}\n"
+    return string
 
 
-def display_preetified_output(__object: list[Group | Operator | Equals | ParenthesizedGroup] | list[Group | Operator | ParenthesizedGroup], indent: int = 0, base: bool = True, string: str = ""):
+def prettify_output(__object: list[Group | Operator | Equals | ParenthesizedGroup] | list[Group | Operator | ParenthesizedGroup], indent: int = 0, base: bool = True, string: str = ""):
     indent += 1
+    string = ""
     if isinstance(__object, list):
         for count, group in enumerate(__object):
             spacing = "" if not base else "\n"
             _indent = indent if base else indent + 1
             if isinstance(group, Group):
-                print(f"{spacing}{tab * (_indent - 1)}Group {count}:")
-                preetify_variable(group.variable, _indent)
-                preetify_number(group.value, _indent)
+                string += f"{spacing}{tab * (_indent - 1)}Group {count}:\n"
+                string += preetify_variable(group.variable, _indent)
+                string += preetify_number(group.value, _indent)
                 if group.power:
-                    print(f"{tab * _indent}┣ Powers:")
-                    display_preetified_output(group.power, _indent, base=False)
+                    string += f"{tab * _indent}┣ Powers:\n"
+                    string += prettify_output(group.power, _indent, base=False)
                 else:
-                    print(f"{tab * _indent}┣ Powers: -")
+                    string += f"{tab * _indent}┣ Powers: -\n"
             elif isinstance(group, ParenthesizedGroup):
-                print(f"Parentheses:")
-                preetify_output(group.groups, _indent - 1, base=False)  # type: ignore
+                string += f"Parentheses:\n"
+                string += prettify_output(group.groups, _indent - 1, base=False)  # type: ignore
 
             elif isinstance(group, Operator):
-                print(f"{spacing}{tab * (_indent - 1)}Operator: {group.symbol}")
+                string += f"{spacing}{tab * (_indent - 1)}Operator: {group.symbol}\n"
+    return string
 
 
 def readjust_index(original_string: str, to_readjust: int):

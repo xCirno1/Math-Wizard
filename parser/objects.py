@@ -56,7 +56,6 @@ class Number:
         if isinstance(value, int):
             self.value = value
         else:
-            print(type(value))
             digit, dec = str(value).split(".")
             self.value, self.decimal = int(digit), Decimal(f"0.{dec}")
         self.is_negative = is_negative
