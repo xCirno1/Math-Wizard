@@ -5,7 +5,7 @@ import solver
 from decimal import Decimal
 
 
-@pytest.mark.parametrize("number, problems", list(enumerate(open(r"tests\test_problems.txt").readlines())))
+@pytest.mark.parametrize("number, problems", list(enumerate(open(r"tests/test_problems.txt").readlines())))
 def test_main(number, problems):
     problem, answer = problems.split("==")
     solved = solver.solve(problem)
