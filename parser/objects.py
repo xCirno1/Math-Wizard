@@ -107,6 +107,11 @@ class Group:
         self.power = power if power is not None else []
         return self
 
+    def get_real_value(self) -> tuple[Group, int, Decimal | int]:
+        total = self.value.value + (d if (d := self.value.decimal) else 0)
+        total *= -1 if self.value.is_negative else 1
+        return self, self.value.value, total
+
     @property
     def _is_base(self):
         return self.variable is None and not self.power and not self.childs and self.value._is_base and not self.modified

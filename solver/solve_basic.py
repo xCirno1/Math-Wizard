@@ -32,12 +32,6 @@ class Positions:
         return self
 
 
-def get_real_value(group: Group) -> tuple[Group, int,  Decimal | int]:  # TODO: Maybe refactor this to become a property/attribute of Group
-    total = group.value.value + (d if (d := group.value.decimal) else 0)
-    total *= -1 if group.value.is_negative else 1
-    return group, group.value.value, total
-
-
 def create_new_group(rv1: Decimal | int, rv2: Decimal | int | None = None, operator: Operator | None = None, power = None): # TODO: Awaiting hints
     if rv2 is None and operator is None:
         result = rv1
@@ -89,18 +83,18 @@ def combine_groups(positions, parsed_groups, operator):
         index = positions.get_add_pos()[0]
     else:
         raise NotImplementedError
-    before = get_real_value(typing.cast(Group, parsed_groups[index - 1]))
-    after = get_real_value(typing.cast(Group, parsed_groups[index + 1]))
+    before = typing.cast(Group, parsed_groups[index - 1]).get_real_value()
+    after = typing.cast(Group, parsed_groups[index + 1]).get_real_value()
     parsed_groups.insert(index - 1, create_new_group(before[-1], after[-1], operator))
     del parsed_groups[index:index + 3]
 
 
 def calculate_group_power(group: Group, calculated_power) -> int | Decimal:
-    rv = get_real_value(group)[-1]
+    rv = group.get_real_value()[-1]
     return -(rv ** calculated_power) if rv < 0 else (rv ** calculated_power)
 
 
-def solve_basic(parsed_groups: list[Group | Operator | ParenthesizedGroup]) -> float:
+def solve_basic(parsed_groups: list[Group | Operator | ParenthesizedGroup]) -> Decimal | int:
     positions = Positions.from_data(parsed_groups)
     parenthesized_groups, operators = positions.parent_loc, positions.operators
     for i in parenthesized_groups:  # The index here is static, so we don't need to re-calculate it
@@ -124,5 +118,6 @@ def solve_basic(parsed_groups: list[Group | Operator | ParenthesizedGroup]) -> f
         combine_groups(positions, parsed_groups, Operator("+"))
 
     if len(parsed_groups) == 1:
-        return get_real_value(parsed_groups[0])[-1]  # type: ignore
+        return typing.cast(Group, parsed_groups[0]).get_real_value()[-1]
+
     raise NotImplementedError("There's a bug here or the input is invalid")
