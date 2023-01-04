@@ -22,8 +22,13 @@ def get_equation_identity(parsed_groups: list[Group | Operator | Equals | Parent
     return identity
 
 
-def determine_equation_type(parsed_groups: list[Group | Operator | Equals | ParenthesizedGroup]) -> int:  # TODO: This is currently `int`
+def determine_equation_type(parsed_groups: list[Group | Operator | Equals | ParenthesizedGroup]) -> int | bool:
     identity = get_equation_identity(parsed_groups)
     if len(identity.variable_count) == 0 and not identity.prove:
         return solve_basic(parsed_groups)  # type: ignore
-    return 1
+    elif len(identity.variable_count) == 0 and identity.prove:
+        equals = parsed_groups.index(Equals())
+        first, second = parsed_groups[:equals], parsed_groups[equals + 1:]
+        return solve_basic(first) == solve_basic(second)  # type: ignore
+
+    raise NotImplementedError

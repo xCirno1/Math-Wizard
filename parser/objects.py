@@ -125,7 +125,8 @@ class Group:
 
 
 class Equals:
-    pass
+    def __eq__(self, other):
+        return isinstance(other, self.__class__)
 
 
 class ParenthesizedGroup:

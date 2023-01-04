@@ -121,7 +121,11 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
             group.variable = Variable(char)
 
         elif __type is Character.equals:
+            last__object = Character.equals
+            if not group._is_base:
+                groups.append(group)
             groups.append(Equals())
+            group = Group()
 
     if not group._is_base:
         groups.append(group)
