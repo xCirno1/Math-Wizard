@@ -79,7 +79,6 @@ def substitute_unnecessary_differ(string: str):
 
 
 def parse_group(string: str, provided_group: Group | None = None, last_object: object = None, groups_only: bool = False, start_from: int = 0):
-    print(string)
     string = substitute_unnecessary_differ(string)
     check_integrity(string)
     groups, last__object, group, jump_to, after_decimal, group_is_parent = [], last_object, provided_group or Group(), start_from, False, False
