@@ -1,9 +1,22 @@
 from __future__ import annotations
 
-from .objects import Character, Group, Integrity, Variable, Operator, Equals, ParenthesizedGroup
 from .utility import match_parentheses
 from .errors import UnmatchedParenthesis
 from .checker import check_integrity
+from .objects import (
+    Character,
+    Group,
+    Integrity,
+    Variable,
+    Operator,
+    Equals,
+    ParenthesizedGroup,
+    LowerThan,
+    LowerThanOrEquals,
+    GreaterThan,
+    GreaterThanOrEquals,
+    NotEquals
+)
 
 
 def verify_type(character: str):
@@ -22,10 +35,16 @@ def verify_type(character: str):
         return Character.decimal
     elif character == "=":
         return Character.equals
+    elif character == "≠":
+        return Character.not_equals
     elif character == "<":
         return Character.lower_than
     elif character == ">":
         return Character.greater_than
+    elif character == "≤":
+        return Character.lower_than_or_equals
+    elif character == "≥":
+        return Character.greater_than_or_equals
     elif character == "!":
         return Character.exclamation
 
@@ -48,7 +67,20 @@ def parse_single_group(string: str) -> tuple[int, str]:  # This is to get the su
     return len(string), string  # Until the end of the query
 
 
+def substitute_unnecessary_differ(string: str):
+    _dict = {
+        ">=": "≥",
+        "<=": "≤",
+        "==": "="
+    }
+    for k, v in _dict.items():
+        string = string.replace(k, v)
+    return string
+
+
 def parse_group(string: str, provided_group: Group | None = None, last_object: object = None, groups_only: bool = False, start_from: int = 0):
+    print(string)
+    string = substitute_unnecessary_differ(string)
     check_integrity(string)
     groups, last__object, group, jump_to, after_decimal, group_is_parent = [], last_object, provided_group or Group(), start_from, False, False
     for index, char in enumerate(string):
@@ -120,15 +152,21 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
         elif __type is Character.variable:
             group.variable = Variable(char)
 
-        elif __type is Character.equals:
-            last__object = Character.equals
+        elif __type in (Character.equals, Character.greater_than, Character.greater_than_or_equals, Character.lower_than, Character.lower_than_or_equals, Character.not_equals):
+            last__object = __type
+            entry = {
+                Character.equals: Equals,
+                Character.greater_than: GreaterThan,
+                Character.greater_than_or_equals: GreaterThanOrEquals,
+                Character.lower_than: LowerThan,
+                Character.lower_than_or_equals: LowerThanOrEquals,
+                Character.not_equals: NotEquals
+            }
             if not group._is_base:
                 groups.append(group)
-            groups.append(Equals())
+            groups.append(entry[__type]())
             group = Group()
 
     if not group._is_base:
         groups.append(group)
     return groups
-
-
