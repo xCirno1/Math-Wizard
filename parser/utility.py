@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from .objects import Number, Group, Variable, Operator, ParenthesizedGroup, Equals, RelationalOperator
+from decimal import Decimal
+
+from .objects import Number, Group, Variable, Operator, ParenthesizedGroup, RelationalOperator
+
+MaybeRO = list[Group | Operator | RelationalOperator | ParenthesizedGroup] | list[Group | Operator | ParenthesizedGroup]
 
 
 def verify_parentheses(s: str) -> bool:
@@ -55,7 +59,7 @@ def preetify_number(number_object: Number, indent: int = 1):
     return string
 
 
-def prettify_output(__object: list[Group | Operator | RelationalOperator | ParenthesizedGroup] | list[Group | Operator | ParenthesizedGroup], indent: int = 0, base: bool = True):
+def prettify_output(__object: MaybeRO, indent: int = 0, base: bool = True):
     indent += 1
     string = ""
     if isinstance(__object, list):
@@ -92,3 +96,36 @@ def readjust_index(original_string: str, to_readjust: int):
                 return to_readjust + differ
         index += 1
     return len(original_string) - 1
+
+
+def groups_to_string(groups: MaybeRO):
+    string = ""
+    for index, group in enumerate(groups):
+        if isinstance(group, Group):
+            neg = " - " if group.value.is_negative else ""
+
+            if neg and index != 0 and isinstance(groups[index - 1], Operator):
+                neg = " -"
+
+            var = group.variable.name if group.variable else ""
+            val = abs(group.get_real_value()[-1])
+            val = "" if val == Decimal("1") and var else val
+
+            if var and group.value.value == 0:
+                val = var = ""
+
+            _pow = groups_to_string(group.power) if group.power else ""
+            _pow = f"^({_pow})" if len(group.power) > 1 else f"^{_pow}" if _pow else ""
+            string += f"{neg}{val}{var}{_pow}"
+
+        elif isinstance(group, (Operator, RelationalOperator)):
+            string += f" {group.symbol} "
+
+        elif isinstance(group, ParenthesizedGroup):
+            inside = groups_to_string(group.groups)  # Inside ParenthesizedGroup shouldn't be empty, so we are skipping that case
+            _pow = groups_to_string(group.power) if group.power else ""
+            _pow = f"^({_pow})" if len(group.power) > 1 else f"^{_pow}" if _pow else ""
+
+            string += f"({inside}){_pow}"
+
+    return string.strip()

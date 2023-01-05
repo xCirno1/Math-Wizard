@@ -131,6 +131,9 @@ class Group:
 
 
 class RelationalOperator:
+    def __init__(self, symbol):
+        self.symbol = symbol
+
     def __call__(self, *args, **kwargs):
         raise NotImplementedError
 

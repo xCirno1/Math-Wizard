@@ -163,7 +163,7 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
             }
             if not group._is_base:
                 groups.append(group)
-            groups.append(entry[__type]())
+            groups.append(entry[__type](char))
             group = Group()
 
     if not group._is_base:
