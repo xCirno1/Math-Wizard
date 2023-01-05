@@ -1,16 +1,16 @@
 from typing import TypeVar
 
-from parser import Group, Operator, ParenthesizedGroup, Equals, parse_group
+from parser import Group, Operator, ParenthesizedGroup, parse_group, RelationalOperator
 from .utility import determine_equation_type
 
 
-T = TypeVar("T", list[Group | ParenthesizedGroup | Operator], list[Group | Equals | Operator | ParenthesizedGroup])
+T = TypeVar("T", list[Group | ParenthesizedGroup | Operator], list[Group | RelationalOperator | Operator | ParenthesizedGroup])
 
 
 def clean_equation(parsed_group: T, base: bool = True) -> T:
     for index, group in enumerate(parsed_group):
-        if not base and isinstance(group, Equals):
-            raise TypeError("Equals cannot be in power or ParenthesizedGroup.")
+        if not base and isinstance(group, RelationalOperator):
+            raise TypeError("Relational operators cannot be inside power or ParenthesizedGroup.")
 
         if isinstance(group, ParenthesizedGroup):
             group.groups = clean_equation(group.groups, base=False)
@@ -31,7 +31,7 @@ def clean_equation(parsed_group: T, base: bool = True) -> T:
     return parsed_group
 
 
-def solve(equation: list[Group | Operator | Equals | ParenthesizedGroup] | str):
+def solve(equation: list[Group | Operator | RelationalOperator | ParenthesizedGroup] | str):
     if isinstance(equation, str):
         equation = parse_group(equation)
     equation = clean_equation(equation)

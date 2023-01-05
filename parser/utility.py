@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .objects import Number, Group, Variable, Operator, ParenthesizedGroup, Equals
+from .objects import Number, Group, Variable, Operator, ParenthesizedGroup, Equals, RelationalOperator
 
 
 def verify_parentheses(s: str) -> bool:
@@ -55,7 +55,7 @@ def preetify_number(number_object: Number, indent: int = 1):
     return string
 
 
-def prettify_output(__object: list[Group | Operator | Equals | ParenthesizedGroup] | list[Group | Operator | ParenthesizedGroup], indent: int = 0, base: bool = True, string: str = ""):
+def prettify_output(__object: list[Group | Operator | RelationalOperator | ParenthesizedGroup] | list[Group | Operator | ParenthesizedGroup], indent: int = 0, base: bool = True):
     indent += 1
     string = ""
     if isinstance(__object, list):

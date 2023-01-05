@@ -17,9 +17,14 @@ class Character:
     exclamation = 11
     greater_than = 12
     lower_than = 13
+    greater_than_or_equals = 14
+    lower_than_or_equals = 15
+    not_equals = 16
 
 
 class Positive: ...
+
+
 class Negative: ...
 
 
@@ -100,7 +105,8 @@ class Group:
         self.modified = False
 
     @classmethod
-    def from_data(cls, value: Number, variable: Variable | None = None, power: list[Group | Operator | ParenthesizedGroup] | None = None) -> Group:
+    def from_data(cls, value: Number, variable: Variable | None = None,
+                  power: list[Group | Operator | ParenthesizedGroup] | None = None) -> Group:
         self = cls()
         self.variable = variable
         self.value = value or self.value
@@ -124,12 +130,47 @@ class Group:
         return f"<Group number={self.value} variable={self.variable} power={self.power}>"
 
 
-class Equals:
-    pass
+class RelationalOperator:
+    def __call__(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__)
+
+
+class Equals(RelationalOperator):
+    def __call__(self, *args, **kwargs):
+        return kwargs.get("first") == kwargs.get("second")
+
+
+class NotEquals(RelationalOperator):
+    def __call__(self, *args, **kwargs):
+        return kwargs.get("first") != kwargs.get("second")
+
+
+class LowerThan(RelationalOperator):
+    def __call__(self, *args, **kwargs):
+        return kwargs["first"] < kwargs["second"]
+
+
+class GreaterThan(RelationalOperator):
+    def __call__(self, *args, **kwargs):
+        return kwargs["first"] > kwargs["second"]
+
+
+class GreaterThanOrEquals(Equals, GreaterThan):
+    def __call__(self, *args, **kwargs):
+        return kwargs["first"] >= kwargs["second"]
+
+
+class LowerThanOrEquals(Equals, LowerThan):
+    def __call__(self, *args, **kwargs):
+        return kwargs["first"] <= kwargs["second"]
 
 
 class ParenthesizedGroup:
-    def __init__(self, groups: list[Group | Operator | ParenthesizedGroup], power: list[Group | Operator | ParenthesizedGroup] | None = None):
+    def __init__(self, groups: list[Group | Operator | ParenthesizedGroup],
+                 power: list[Group | Operator | ParenthesizedGroup] | None = None):
         self.groups = groups
         self.power = power or []
         self.is_negative = False
