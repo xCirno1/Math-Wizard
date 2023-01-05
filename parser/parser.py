@@ -98,10 +98,10 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
             group._is_base = False  # This is for the number 0, so the parser doesn't see it as a base group
             last__object = Character.digit
             if after_decimal:
-                group.value.append_digit(char, decimal=True)
+                group.number.append_digit(char, decimal=True)
                 continue
             if not group.power:
-                group.value.append_digit(char)
+                group.number.append_digit(char)
         else:
             after_decimal = False
 
@@ -111,7 +111,7 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
                     groups.append(group)
                 group = Group()
 
-            group.value.is_negative = not group.value.is_negative  # This is for handling '--' (double negative) situation
+            group.number.is_negative = not group.number.is_negative  # This is for handling '--' (double negative) situation
 
             last__object = Integrity.negative
 
@@ -130,8 +130,8 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
             i, rest = parse_single_group(string[index:])
             content = parse_group(rest, last_object=last__object, groups_only=groups_only)
             par = ParenthesizedGroup(content)
-            if last__object == Integrity.negative:
-                par.is_negative = group.value.is_negative
+            if last__object is Integrity.negative:
+                par.is_negative = group.number.is_negative
             groups.append(par)
             jump_to = index + i
             group_is_parent = True
@@ -150,6 +150,8 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
 
         elif __type is Character.variable:
             group.variable = Variable(char)
+            if last__object is not Character.digit:
+                group.number.value = 1
 
         elif __type in (Character.equals, Character.greater_than, Character.greater_than_or_equals, Character.lower_than, Character.lower_than_or_equals, Character.not_equals):
             last__object = __type

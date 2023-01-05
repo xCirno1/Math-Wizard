@@ -69,7 +69,7 @@ def prettify_output(__object: MaybeRO, indent: int = 0, base: bool = True):
             if isinstance(group, Group):
                 string += f"{spacing}{tab * (_indent - 1)}Group {count}:\n"
                 string += preetify_variable(group.variable, _indent)
-                string += preetify_number(group.value, _indent)
+                string += preetify_number(group.number, _indent)
                 if group.power:
                     string += f"{tab * _indent}┣ Powers:\n"
                     string += prettify_output(group.power, _indent, base=False)
@@ -102,7 +102,7 @@ def groups_to_string(groups: MaybeRO):
     string = ""
     for index, group in enumerate(groups):
         if isinstance(group, Group):
-            neg = " - " if group.value.is_negative else ""
+            neg = " - " if group.number.is_negative else ""
 
             if neg and index != 0 and isinstance(groups[index - 1], Operator):
                 neg = " -"
@@ -111,7 +111,7 @@ def groups_to_string(groups: MaybeRO):
             val = abs(group.get_real_value()[-1])
             val = "" if val == Decimal("1") and var else val
 
-            if var and group.value.value == 0:
+            if var and group.number.value == 0:
                 val = var = ""
 
             _pow = groups_to_string(group.power) if group.power else ""

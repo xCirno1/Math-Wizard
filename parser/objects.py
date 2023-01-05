@@ -99,7 +99,7 @@ class Variable:
 class Group:
     def __init__(self):
         self.variable: Variable | None = None
-        self.value: Number = Number()
+        self.number: Number = Number()
         self.power: list[Group | Operator | ParenthesizedGroup] = []
         self.childs = []  # Currently, it should hold 1 object, Variable
         self.modified = False
@@ -109,25 +109,25 @@ class Group:
                   power: list[Group | Operator | ParenthesizedGroup] | None = None) -> Group:
         self = cls()
         self.variable = variable
-        self.value = value or self.value
+        self.number = value or self.number
         self.power = power if power is not None else []
         return self
 
     def get_real_value(self) -> tuple[Group, int, Decimal | int]:
-        total = self.value.value + (d if (d := self.value.decimal) else 0)
-        total *= -1 if self.value.is_negative else 1
-        return self, self.value.value, total
+        total = self.number.value + (d if (d := self.number.decimal) else 0)
+        total *= -1 if self.number.is_negative else 1
+        return self, self.number.value, total
 
     @property
     def _is_base(self):
-        return self.variable is None and not self.power and not self.childs and self.value._is_base and not self.modified
+        return self.variable is None and not self.power and not self.childs and self.number._is_base and not self.modified
 
     @_is_base.setter
     def _is_base(self, value):
         self.modified = not value
 
     def __repr__(self):
-        return f"<Group number={self.value} variable={self.variable} power={self.power}>"
+        return f"<Group number={self.number} variable={self.variable} power={self.power}>"
 
 
 class RelationalOperator:
