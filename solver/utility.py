@@ -4,15 +4,17 @@ from .solve_basic import solve_basic
 
 
 class EquationIdentity:
-    variable_count: dict[Variable, int] = {}
-    prove: bool = False
+    def __init__(self):
+        self.variable_count: dict[Variable, int] = {}
+        self.relational_operators: list[tuple[RelationalOperator, int]] = []
 
 
 def get_equation_identity(parsed_groups: list[Group | Operator | RelationalOperator | ParenthesizedGroup]) -> EquationIdentity:
     identity = EquationIdentity()
-    for group in parsed_groups:
+    for index, group in enumerate(parsed_groups):
         if isinstance(group, RelationalOperator):
-            identity.prove = True
+            identity.relational_operators.append((group, index))
+
         if isinstance(group, (RelationalOperator, Operator, ParenthesizedGroup)):
             continue
 
@@ -22,20 +24,13 @@ def get_equation_identity(parsed_groups: list[Group | Operator | RelationalOpera
     return identity
 
 
-def get_relational_operator_position(parsed_groups) -> tuple[RelationalOperator, int]:
-    for i, element in enumerate(parsed_groups):
-        if isinstance(element, RelationalOperator):
-            return element, i
-    raise ValueError("No relational operator found. This is a bug.")
-
-
 def determine_equation_type(parsed_groups: list[Group | Operator | RelationalOperator | ParenthesizedGroup]) -> int | bool:
     identity = get_equation_identity(parsed_groups)
-    if len(identity.variable_count) == 0 and not identity.prove:
+    if len(identity.variable_count) == 0 and not identity.relational_operators:  # Basic PEMDAS
         return solve_basic(parsed_groups)  # type: ignore  # Need to find a way to fix the hints
 
-    elif len(identity.variable_count) == 0 and identity.prove:
-        relational_operator, index = get_relational_operator_position(parsed_groups)
+    elif len(identity.variable_count) == 0 and identity.relational_operators:  # Basic PEMDAS with relational operator
+        relational_operator, index = identity.relational_operators[0]  # TODO: Allow multiple relational operators
         first, second = parsed_groups[:index], parsed_groups[index + 1:]
         return relational_operator(first=solve_basic(first), second=solve_basic(second))  # type: ignore
 
