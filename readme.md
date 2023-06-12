@@ -1,12 +1,8 @@
 # Math Wizard
-This project was made to ensure that your calculations are precise and correct. The project is independent; it doesn't require any additional libraries. The goal is to create an easy-to-use program that solves math problems accurately. The project is open to any advice and requests (so please feel free to create issues or pull requests).
-
-
-
+Welcome to Math Wizard, a project designed to ensure precise and accurate mathematical calculations. This is an independent project, which eliminates the need for any additional libraries. Our primary goal is to provide users with an easy-to-use platform for solving math problems. We highly welcome your feedback, suggestions, and contributions, so please don't hesitate to create issues or pull requests.
 
 ## Installation
-The project is not available on pypi yet. To clone the project, run `git clone https://github.com/xCirno1/Math-Wizard`.
-
+Currently, Math Wizard is not available on PyPI (*yet). To get started, simply clone the project by running the following command: `git clone https://github.com/xCirno1/Math-Wizard`
 
 ## Basic Example
 ```python
@@ -22,17 +18,16 @@ print(answer)  # Prints 25
 
 ## Features
 - Parsing problems and equations
+- Safe calculation without the usage of `eval` or `exec`
 - Basic calculation (PEMDAS problem)
 
-
 ## How it works
-1. Math Wizard received the problem/equation as a string.
-2. It parses the string per character, and decide what type the character is (operator, digit, etc).
-3. After the parsing section finishes, it then sees the problem's identity. (How many variables? Is it an equation?, and so on...)
-4. It decides the problem type (Basic PEMDAS, Quadratic Equation, etc)
-5. It solves the problem using specific functions, divided according to its type.
+Math Wizard operates by accepting problems and equations as strings and using its own algorithm to solve them. Here's a breakdown of the process:
+1. Math Wizard receives the problem or equation as a string.
+2. It parses the string character by character, identifying the type of each character (operator, digit, etc.).
+3. Once the parsing phase is complete, Math Wizard determines the problem's identity, such as the number of variables or whether it's an equation.
+4. It then categorizes the problem type, whether it falls under Basic PEMDAS, Quadratic Equation, or other categories.
+5. Using specific functions bound to each problem type, Math Wizard proceeds to solve the problem.
 
 
-
-
-_Note: This is a development project, do not use on production._
+_Note: This project is currently on development and should not be used in production environments._
