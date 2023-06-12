@@ -2,7 +2,7 @@ from typing import TypeVar
 
 from parser import Group, Operator, ParenthesizedGroup, parse_group, RelationalOperator
 from .utility import determine_equation_type
-
+from .datatype import CompleteEquation
 
 T = TypeVar("T", list[Group | ParenthesizedGroup | Operator], list[Group | RelationalOperator | Operator | ParenthesizedGroup])
 
@@ -31,9 +31,8 @@ def clean_equation(parsed_group: T, base: bool = True) -> T:
     return parsed_group
 
 
-def solve(equation: list[Group | Operator | RelationalOperator | ParenthesizedGroup] | str):
+def solve(equation: CompleteEquation | str):
     if isinstance(equation, str):
         equation = parse_group(equation)
     equation = clean_equation(equation)
-
-    return determine_equation_type(equation)
+    return determine_equation_type(equation)  # We shouldn't convert to string automatically here

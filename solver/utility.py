@@ -1,6 +1,8 @@
-from parser import Group, Variable, Operator, ParenthesizedGroup, RelationalOperator
+from parser import Variable, Operator, ParenthesizedGroup, RelationalOperator
 
 from .solve_basic import solve_basic
+from .solve_algebra import solve_algebra
+from .datatype import Maybe_RO, CompleteEquation
 
 
 class EquationIdentity:
@@ -9,7 +11,7 @@ class EquationIdentity:
         self.relational_operators: list[tuple[RelationalOperator, int]] = []
 
 
-def get_equation_identity(parsed_groups: list[Group | Operator | RelationalOperator | ParenthesizedGroup]) -> EquationIdentity:
+def get_equation_identity(parsed_groups: Maybe_RO) -> EquationIdentity:
     identity = EquationIdentity()
     for index, group in enumerate(parsed_groups):
         if isinstance(group, RelationalOperator):
@@ -24,7 +26,7 @@ def get_equation_identity(parsed_groups: list[Group | Operator | RelationalOpera
     return identity
 
 
-def determine_equation_type(parsed_groups: list[Group | Operator | RelationalOperator | ParenthesizedGroup]) -> int | bool:
+def determine_equation_type(parsed_groups: CompleteEquation) -> int | bool | dict:
     identity = get_equation_identity(parsed_groups)
     if len(identity.variable_count) == 0 and not identity.relational_operators:  # Basic PEMDAS
         return solve_basic(parsed_groups)  # type: ignore  # Need to find a way to fix the hints
@@ -33,5 +35,8 @@ def determine_equation_type(parsed_groups: list[Group | Operator | RelationalOpe
         relational_operator, index = identity.relational_operators[0]  # TODO: Allow multiple relational operators
         first, second = parsed_groups[:index], parsed_groups[index + 1:]
         return relational_operator(first=solve_basic(first), second=solve_basic(second))  # type: ignore
+
+    elif len(identity.variable_count) == 1 and identity.relational_operators:
+        return solve_algebra(parsed_groups)
 
     raise NotImplementedError

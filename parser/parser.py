@@ -151,7 +151,7 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
         elif __type is Character.variable:
             group.variable = Variable(char)
             if last__object is not Character.digit:
-                group.number.value = 1
+                group.number.integer = 1
 
         elif __type in (Character.equals, Character.greater_than, Character.greater_than_or_equals, Character.lower_than, Character.lower_than_or_equals, Character.not_equals):
             last__object = __type

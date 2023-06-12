@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-
 class Character:
     digit = 1
     power = 2
@@ -49,43 +48,59 @@ class Operator:
 
 class Number:
     def __init__(self):
-        self.value: int = 0
+        self.integer: int = 0
         self.is_negative = False
-        self.decimal: Decimal | None = None
+        self.decimal: Decimal = Decimal(0)
         self.modified = False
 
+    @property
+    def value(self) -> Decimal:
+        return Decimal(f"{'-' if self.is_negative else ''}{self.integer + self.decimal}")
+
+    @value.setter
+    def value(self, value: Decimal):
+        self.from_data(value, self=self)
+
     @classmethod
-    def from_data(cls, value: int | float, decimal: float | str = 0, is_negative: bool = False) -> Number:
-        self = cls()
+    def from_data(cls, value: Decimal, decimal: Decimal | str = "0.0", is_negative: bool = False, self: Number | None = None) -> Number:
+        self = self or cls()
         self.decimal = Decimal(decimal)
-        if isinstance(value, int):
-            self.value = value
+        if isinstance(value, Decimal) and value % 1 == 0:  # Same as "if value is integer"
+            self.integer = int(abs(value))
         else:
             digit, dec = str(value).split(".")
-            self.value, self.decimal = int(digit), Decimal(f"0.{dec}")
-        self.is_negative = is_negative
+            self.integer, self.decimal = abs(int(digit)), Decimal(f"0.{dec}")
+        self.is_negative = is_negative or value < 0
         return self
 
     def append_digit(self, string: str, decimal: bool = False) -> Number:
         if decimal:
-            if self.decimal is None:
+
+            if str(self.decimal) == "0":  # This is for leading 0 bug, for example '0.03'
                 self.decimal = Decimal(f"0.{string}")
             else:
                 self.decimal = Decimal(f"{self.decimal}{string}")
+
         else:
-            self.value = int(str(self.value) + string)
+            self.integer = int(str(self.integer) + string)
         return self
 
     @property
     def _is_base(self):
-        return not self.value and not self.decimal and not self.modified
+        return not self.integer and not self.decimal and not self.modified
 
     @_is_base.setter
     def _is_base(self, value):
         self.modified = not value
 
     def __repr__(self):
-        return f"<Number value={self.value} decimal={self.decimal} negative={self.is_negative}>"
+        return f"<Number value={self.integer} decimal={self.decimal} negative={self.is_negative}>"
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.integer == other.integer and self.is_negative == other.is_negative and self.decimal == other.decimal
+
+    def __hash__(self):
+        return hash(self.integer) + hash(self.is_negative) + hash(self.decimal)
 
 
 class Variable:
@@ -94,6 +109,12 @@ class Variable:
 
     def __repr__(self):
         return f"<Variable name={self.name}>"
+
+    def __eq__(self, other):
+        return isinstance(other, Variable) and self.name == other.name
+
+    def __hash__(self):
+        return hash(self.name)
 
 
 class Group:
@@ -113,10 +134,15 @@ class Group:
         self.power = power if power is not None else []
         return self
 
-    def get_real_value(self) -> tuple[Group, int, Decimal | int]:
-        total = self.number.value + (d if (d := self.number.decimal) else 0)
-        total *= -1 if self.number.is_negative else 1
-        return self, self.number.value, total
+    @classmethod
+    def from_value(cls, value: Decimal, *args, **kwargs):
+        num, dec = value, "0"
+        if "." in (val := str(value)):
+            num, dec = val.split(".")
+        return cls.from_data(value=Number.from_data(abs(Decimal(num)), Decimal(dec), value < 0), *args, **kwargs)
+
+    def get_value(self) -> Decimal:
+        return self.number.value
 
     @property
     def _is_base(self):
@@ -126,8 +152,17 @@ class Group:
     def _is_base(self, value):
         self.modified = not value
 
+    def is_same_variable(self, other: Group):
+        return self.power == other.power and self.variable == other.variable
+
     def __repr__(self):
         return f"<Group number={self.number} variable={self.variable} power={self.power}>"
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.number == other.number and self.variable == other.variable and self.power == other.power
+
+    def __hash__(self):
+        return hash(self.variable) + hash(self.number) + hash(tuple(self.power))
 
 
 class RelationalOperator:
