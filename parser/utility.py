@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from .objects import Number, Group, Variable, Operator, ParenthesizedGroup, RelationalOperator
 
-MaybeRO = list[Group | Operator | RelationalOperator | ParenthesizedGroup] | list[Group | Operator | ParenthesizedGroup]
+if TYPE_CHECKING:
+    from solver.datatype import Maybe_RO
 
 
 def verify_parentheses(s: str) -> bool:
@@ -53,13 +55,13 @@ def preetify_variable(variable_object: Variable | None, indent: int = 1):
 
 def preetify_number(number_object: Number, indent: int = 1):
     string = ""
-    value = str(number_object.value) + (f".{number_object.decimal}" if number_object.decimal else "")
+    value = str(number_object.integer) + (f".{number_object.decimal}" if number_object.decimal else "")
     string += f"{tab * indent}┣ Value: {value}\n"
     string += f"{tab * indent}┣ Negative: {number_object.is_negative}\n"
     return string
 
 
-def prettify_output(__object: MaybeRO, indent: int = 0, base: bool = True):
+def prettify_output(__object: Maybe_RO, indent: int = 0, base: bool = True):
     indent += 1
     string = ""
     if isinstance(__object, list):
@@ -98,26 +100,25 @@ def readjust_index(original_string: str, to_readjust: int):
     return len(original_string) - 1
 
 
-def groups_to_string(groups: MaybeRO):
+def groups_to_string(groups: Maybe_RO):
     string = ""
     for index, group in enumerate(groups):
         if isinstance(group, Group):
             neg = " - " if group.number.is_negative else ""
 
-            if neg and index != 0 and isinstance(groups[index - 1], Operator):
-                neg = " -"
+            if neg and (index == 0 or isinstance(groups[index - 1], (Operator, RelationalOperator))):
+                neg = "-"
 
             var = group.variable.name if group.variable else ""
-            val = abs(group.get_real_value()[-1])
+            val = truncate_trailing_zero(abs(group.get_value()))
             val = "" if val == Decimal("1") and var else val
 
-            if var and group.number.value == 0:
+            if var and group.number.integer == 0:
                 val = var = ""
 
             _pow = groups_to_string(group.power) if group.power else ""
             _pow = f"^({_pow})" if len(group.power) > 1 else f"^{_pow}" if _pow else ""
             string += f"{neg}{val}{var}{_pow}"
-
         elif isinstance(group, (Operator, RelationalOperator)):
             string += f" {group.symbol} "
 
@@ -129,3 +130,7 @@ def groups_to_string(groups: MaybeRO):
             string += f"({inside}){_pow}"
 
     return string.strip()
+
+
+def truncate_trailing_zero(number: Decimal) -> Decimal:
+    return Decimal(int(number)) if number % 1 == 0 else number

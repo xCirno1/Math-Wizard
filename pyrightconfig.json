@@ -1,4 +1,4 @@
 {
-    "ignore": ["tests"],
+    "include": ["solver", "parser"],
     "pythonVersion": "3.10"
 }
