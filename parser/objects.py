@@ -215,8 +215,9 @@ class ParenthesizedGroup:
 class Fraction:
     def __init__(self, numerator: No_RO, denominator: No_RO):
         self.numerator = numerator
-        if isinstance(denominator, Group) and denominator.number.value == 0:
-            raise ZeroDivisionError
+        if isinstance(deno := denominator[0], Group) and deno.number.value == 0:
+            # This is only raised when the denominator is definitely zero, we don't raise in case of 1/(2 - 2)
+            raise ZeroDivisionError("Fraction denominator cannot be 0.")
         self.denominator = denominator
 
     def __repr__(self):
