@@ -1,17 +1,16 @@
 import typing
 
 from decimal import Decimal
-from parser import Group, Operator, Equals, Number, RelationalOperator, groups_to_string
+from parser import Group, Operator, Equals, Number, RelationalOperator
 
 from .core import Positions
 from .datatype import No_RO, CompleteEquation
-# x + 3 * - 2 = 2x - 2
 
 
 def allowed_addition(parsed_group: No_RO, i: int):  # This should be refactored after fractions are implemented
-    is_not_before_mul_or_div = (parsed_group[i + 1] not in (Operator("*"), Operator("/"))) if i != len(parsed_group) - 1 else True
-    is_not_after_mul_or_div = (parsed_group[i - 1] not in (Operator("*"), Operator("/"))) if i > 1 else True
-    return is_not_after_mul_or_div and is_not_before_mul_or_div
+    is_not_before_mul = (parsed_group[i + 1] != Operator("*")) if i != len(parsed_group) - 1 else True
+    is_not_after_mul = (parsed_group[i - 1] != Operator("*")) if i > 1 else True
+    return is_not_after_mul and is_not_before_mul
 
 
 def clean_equation(parsed_group: No_RO, index: int, first_element: int):
@@ -35,13 +34,16 @@ def combine_similar_groups(parsed_group: No_RO):
         variables = positions.get_variable_positions()
         indexes = list(reversed(variables[key]))
         first_element = variables[key][0]
+        iterate_times = 0
         for index in indexes:
             if allowed_addition(parsed_group, index):
                 group = typing.cast(Group, parsed_group.pop(index))
                 coefficient = group.get_value()
                 key.number = Number.from_data(key.get_value() + coefficient)
                 clean_equation(parsed_group, index, first_element)
-        parsed_group.insert(first_element, key)
+                iterate_times += 1
+        if iterate_times != 0:  # That means we have combined something, we don't want to keep junk group here
+            parsed_group.insert(first_element, key)
     return parsed_group
 
 
@@ -50,7 +52,8 @@ def merge_lhs_to_rhs(lhs: No_RO, rhs: No_RO):
     for key in set(list(lhs_pos.get_variable_positions()) + list(rhs_pos.get_variable_positions())):
         lhs_variables, rhs_variables = lhs_pos.get_variable_positions(), rhs_pos.get_variable_positions()
         if key.variable is None:  # Design: Non-variable group should be on the right hand side
-            if (lhs_index := lhs_variables.get(key)) is not None:
+            # There should always be one group only here right?
+            if (lhs_index := lhs_variables.get(key)) is not None and allowed_addition(lhs, lhs_index[0]):
                 try:
                     rhs_group = typing.cast(Group, rhs[rhs_variables[key][0]])
                 except KeyError:
@@ -92,9 +95,9 @@ def calculate_equivalent_groups(parsed_group: CompleteEquation, positions: Posit
     lhs, rhs = typing.cast(tuple[No_RO, No_RO], (parsed_group[:equals], parsed_group[equals + 1:]))
     combined_lhs, combined_rhs = combine_similar_groups(lhs), combine_similar_groups(rhs)
     total = merge_lhs_to_rhs(combined_lhs, combined_rhs)
-
     if len(total) == 3:  # In the format of "<var> <RO> <number>"
         return divide_both_side(tuple(total))  # type: ignore
+    return total  # Debugging purposes
 
 
 def solve_algebra(parsed_group: CompleteEquation) -> dict:

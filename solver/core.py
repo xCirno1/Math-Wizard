@@ -1,5 +1,5 @@
 from parser import Group, Operator, ParenthesizedGroup, RelationalOperator, Number, Variable
-from .datatype import Maybe_RO
+from .datatype import Maybe_RO, No_RO
 
 from typing import overload
 
@@ -20,7 +20,7 @@ class Positions:
     def get_add_pos(self):
         return self.operators.get(Operator("+"), [])
 
-    def update_data(self, parsed_groups: list[Group | Operator | ParenthesizedGroup]):
+    def update_data(self, parsed_groups: No_RO):
         self.parent_loc, self.operators, self.existing_powers = get_PEMDAS_positions(parsed_groups)
 
     @overload

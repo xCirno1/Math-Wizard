@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from decimal import Decimal
+
+if TYPE_CHECKING:
+    from solver.datatype import No_RO
+
 
 class Character:
     digit = 1
@@ -121,13 +127,13 @@ class Group:
     def __init__(self):
         self.variable: Variable | None = None
         self.number: Number = Number()
-        self.power: list[Group | Operator | ParenthesizedGroup] = []
+        self.power: No_RO = []
         self.childs = []  # Currently, it should hold 1 object, Variable
         self.modified = False
 
     @classmethod
     def from_data(cls, value: Number, variable: Variable | None = None,
-                  power: list[Group | Operator | ParenthesizedGroup] | None = None) -> Group:
+                  power: No_RO | None = None) -> Group:
         self = cls()
         self.variable = variable
         self.number = value or self.number
@@ -170,35 +176,25 @@ class RelationalOperator:
         self.symbol = symbol
 
     def __call__(self, *args, **kwargs):
-        raise NotImplementedError
+        classes = {
+            Equals: lambda first, second: kwargs["first"] == kwargs["second"],
+            NotEquals: lambda first, second: kwargs["first"] != kwargs["second"],
+            LowerThan: lambda first, second: kwargs["first"] < kwargs["second"],
+            GreaterThan: lambda first, second: kwargs["first"] > kwargs["second"],
+            GreaterThanOrEquals: lambda first, second: kwargs["first"] >= kwargs["second"],
+            LowerThanOrEquals: lambda first, second: kwargs["first"] <= kwargs["second"],
+        }
+        return classes[self.__class__](**kwargs)  # type: ignore
 
     def __eq__(self, other):
         return isinstance(other, self.__class__)
 
 
-class Equals(RelationalOperator):
-    def __call__(self, *args, **kwargs):
-        return kwargs.get("first") == kwargs.get("second")
-
-
-class NotEquals(RelationalOperator):
-    def __call__(self, *args, **kwargs):
-        return kwargs.get("first") != kwargs.get("second")
-
-
-class LowerThan(RelationalOperator):
-    def __call__(self, *args, **kwargs):
-        return kwargs["first"] < kwargs["second"]
-
-
-class GreaterThan(RelationalOperator):
-    def __call__(self, *args, **kwargs):
-        return kwargs["first"] > kwargs["second"]
-
-
-class GreaterThanOrEquals(Equals, GreaterThan):
-    def __call__(self, *args, **kwargs):
-        return kwargs["first"] >= kwargs["second"]
+class Equals(RelationalOperator): ...
+class NotEquals(RelationalOperator): ...
+class LowerThan(RelationalOperator): ...
+class GreaterThan(RelationalOperator): ...
+class GreaterThanOrEquals(Equals, GreaterThan): ...
 
 
 class LowerThanOrEquals(Equals, LowerThan):
@@ -207,11 +203,24 @@ class LowerThanOrEquals(Equals, LowerThan):
 
 
 class ParenthesizedGroup:
-    def __init__(self, groups: list[Group | Operator | ParenthesizedGroup],
-                 power: list[Group | Operator | ParenthesizedGroup] | None = None):
+    def __init__(self, groups: No_RO, power: No_RO | None = None):
         self.groups = groups
         self.power = power or []
         self.is_negative = False
 
     def __repr__(self):
         return f"<ParenthesizedGroup groups={[group for group in self.groups]} power={[p for p in self.power]} is_negative={self.is_negative}>"
+
+
+class Fraction:
+    def __init__(self, numerator: No_RO, denominator: No_RO):
+        self.numerator = numerator
+        if isinstance(denominator, Group) and denominator.number.value == 0:
+            raise ZeroDivisionError
+        self.denominator = denominator
+
+    def __repr__(self):
+        return f"<Fraction numerator={[group for group in self.numerator]} denominator={[group for group in self.denominator]}>"
+
+    def __eq__(self, other):
+        return isinstance(other, Fraction) and self.numerator == other.numerator and self.denominator == other.denominator

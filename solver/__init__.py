@@ -2,9 +2,9 @@ from typing import TypeVar
 
 from parser import Group, Operator, ParenthesizedGroup, parse_group, RelationalOperator
 from .utility import determine_equation_type
-from .datatype import CompleteEquation
+from .datatype import CompleteEquation, Maybe_RO
 
-T = TypeVar("T", list[Group | ParenthesizedGroup | Operator], list[Group | RelationalOperator | Operator | ParenthesizedGroup])
+T = TypeVar("T", bound=Maybe_RO)
 
 
 def clean_equation(parsed_group: T, base: bool = True) -> T:

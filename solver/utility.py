@@ -1,5 +1,6 @@
 from parser import Variable, Operator, ParenthesizedGroup, RelationalOperator
 
+from parser.objects import Fraction
 from .solve_basic import solve_basic
 from .solve_algebra import solve_algebra
 from .datatype import Maybe_RO, CompleteEquation
@@ -17,13 +18,25 @@ def get_equation_identity(parsed_groups: Maybe_RO) -> EquationIdentity:
         if isinstance(group, RelationalOperator):
             identity.relational_operators.append((group, index))
 
-        if isinstance(group, (RelationalOperator, Operator, ParenthesizedGroup)):
+        if isinstance(group, (RelationalOperator, Operator, ParenthesizedGroup, Fraction)):
             continue
 
         if (var := group.variable) is not None:  # There's variable
             identity.variable_count[var] = identity.variable_count.get(var, 0) + 1
 
     return identity
+
+
+def convert_division_to_fraction(groups: CompleteEquation):
+    new: CompleteEquation = []
+    index = 0
+    for group in groups:
+        if isinstance(group, Operator) and group.symbol == "/":
+            new.append(Fraction(numerator=[new.pop(-1)], denominator=[groups.pop(index + 1)]))  # type: ignore
+        else:
+            new.append(group)
+        index += 1
+    return new
 
 
 def determine_equation_type(parsed_groups: CompleteEquation) -> int | bool | dict:
@@ -37,6 +50,7 @@ def determine_equation_type(parsed_groups: CompleteEquation) -> int | bool | dic
         return relational_operator(first=solve_basic(first), second=solve_basic(second))  # type: ignore
 
     elif len(identity.variable_count) == 1 and identity.relational_operators:
+        parsed_groups = convert_division_to_fraction(parsed_groups)
         return solve_algebra(parsed_groups)
 
     raise NotImplementedError
