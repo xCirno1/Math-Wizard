@@ -113,12 +113,10 @@ def groups_to_string(groups: Maybe_RO):
             val = truncate_trailing_zero(abs(group.get_value()))
             val = "" if val == Decimal("1") and var else val
 
-            if var and group.number.integer == 0:
-                val = var = ""
-
             _pow = groups_to_string(group.power) if group.power else ""
             _pow = f"^({_pow})" if len(group.power) > 1 else f"^{_pow}" if _pow else ""
             string += f"{neg}{val}{var}{_pow}"
+
         elif isinstance(group, (Operator, RelationalOperator)):
             string += f" {group.symbol} "
 
@@ -130,6 +128,9 @@ def groups_to_string(groups: Maybe_RO):
             string += f"({inside}){_pow}"
 
     return string.strip()
+
+
+gts = groups_to_string
 
 
 def truncate_trailing_zero(number: Decimal) -> Decimal:
