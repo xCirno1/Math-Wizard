@@ -1,5 +1,6 @@
 import logging
 
+from decimal import Decimal
 from parser import Variable, Operator, ParenthesizedGroup, RelationalOperator, gts, Fraction
 
 from .solve_basic import solve_basic
@@ -44,7 +45,7 @@ def convert_division_to_fraction(groups: CompleteEquation):
     return new
 
 
-def determine_equation_type(parsed_groups: CompleteEquation) -> int | bool | list:
+def determine_equation_type(parsed_groups: CompleteEquation) -> Decimal | bool | list:
     _log.info("Determining equation type...")
     identity = get_equation_identity(parsed_groups)
 

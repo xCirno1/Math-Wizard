@@ -8,7 +8,7 @@ from .datatype import CompleteEquation, Maybe_RO
 
 # Setup logging
 handler = logging.FileHandler('logs.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+handler.setFormatter(logging.Formatter('%(filename)s - %(funcName)s - %(message)s'))
 
 _log = logging.getLogger(__name__)
 _log.setLevel(logging.DEBUG)

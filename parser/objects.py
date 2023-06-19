@@ -81,12 +81,10 @@ class Number:
 
     def append_digit(self, string: str, decimal: bool = False) -> Number:
         if decimal:
-
             if str(self.decimal) == "0":  # This is for leading 0 bug, for example '0.03'
                 self.decimal = Decimal(f"0.{string}")
             else:
-                self.decimal = Decimal(f"{self.decimal}{string}")
-
+                self.decimal = Decimal(f"{self.decimal:f}{string}")
         else:
             self.integer = int(str(self.integer) + string)
         return self

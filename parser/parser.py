@@ -51,6 +51,16 @@ def verify_type(character: str):
     return Character.variable
 
 
+RO = (
+    Character.equals,
+    Character.greater_than,
+    Character.greater_than_or_equals,
+    Character.lower_than,
+    Character.lower_than_or_equals,
+    Character.not_equals
+)
+
+
 def parse_single_group(string: str) -> tuple[int, str]:  # This is to get the substring between the parentheses
     if string.startswith("("):
         opening, closing = match_parentheses(string)[0]  # Get the position of opening and closing parentheses
@@ -58,7 +68,7 @@ def parse_single_group(string: str) -> tuple[int, str]:  # This is to get the su
     after_obj = False
     for index, char in enumerate(string):
         _type = verify_type(char)
-        if _type in (Character.operator, Character.integrity, Character.opening_parentheses) and after_obj:
+        if _type in (Character.operator, Character.integrity, Character.opening_parentheses, *RO) and after_obj:
             return index, string[:index]
         elif _type in (Character.digit, Character.variable):
             after_obj = True
@@ -110,8 +120,8 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
                 if not group._is_base:
                     groups.append(group)
                 group = Group()
-
-            group.number.is_negative = not group.number.is_negative  # This is for handling '--' (double negative) situation
+            # This is for handling '--' (double negative) situation
+            group.number.is_negative = not group.number.is_negative
 
             last__object = Integrity.negative
 
@@ -152,8 +162,9 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
             group.variable = Variable(char)
             if last__object is not Character.digit:
                 group.number.integer = 1
+            last__object = Character.variable
 
-        elif __type in (Character.equals, Character.greater_than, Character.greater_than_or_equals, Character.lower_than, Character.lower_than_or_equals, Character.not_equals):
+        elif __type in RO:
             last__object = __type
             entry = {
                 Character.equals: Equals,

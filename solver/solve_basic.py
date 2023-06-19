@@ -3,7 +3,7 @@ import typing
 
 from decimal import Decimal
 
-from parser import Group, Operator, ParenthesizedGroup, Number, gts
+from parser import Group, Operator, ParenthesizedGroup, Number, gts, truncate_trailing_zero
 from .core import Positions
 from .datatype import mul_and_div, No_RO
 
@@ -27,9 +27,9 @@ def create_new_group(rv1: Decimal, rv2: Decimal | None = None, operator: Operato
         else:
             raise TypeError("Unsupported operator.")
     try:
-        whole, dec = str(result).split(".")
+        whole, dec = f"{result.normalize():f}".split(".")  # Limit to 20 decimal places
     except ValueError:
-        whole, dec = str(result), 0
+        whole, dec = str(truncate_trailing_zero(result)), 0
     num = Number.from_data(value=Decimal(abs(int(whole))), decimal=f"0.{dec}", is_negative=whole[0] == "-")
     group = Group.from_data(num)
     if power is not None:
@@ -55,7 +55,7 @@ def calculate_group_power(group: Group, calculated_power) -> Decimal:
     return -(rv ** calculated_power) if rv < 0 else (rv ** calculated_power)
 
 
-def solve_basic(parsed_groups: No_RO) -> Decimal | int:
+def solve_basic(parsed_groups: No_RO) -> Decimal:
     positions = Positions.from_data(parsed_groups)
     parenthesized_groups, operators = positions.parent_loc, positions.operators
     _log.info("Calculating parentheses...")
@@ -88,6 +88,6 @@ def solve_basic(parsed_groups: No_RO) -> Decimal | int:
     _log.info("Finished calculating additions and subtractions, got '%s'", gts(parsed_groups))
 
     if len(parsed_groups) == 1:
-        return typing.cast(Group, parsed_groups[0]).get_value()
+        return typing.cast(Group, parsed_groups[0]).get_value().normalize()
 
     raise NotImplementedError("There's a bug here or the input is invalid")
