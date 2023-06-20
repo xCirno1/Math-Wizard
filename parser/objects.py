@@ -25,6 +25,7 @@ class Character:
     greater_than_or_equals = 14
     lower_than_or_equals = 15
     not_equals = 16
+    scientific = 17
 
 
 class Positive: ...
@@ -130,8 +131,7 @@ class Group:
         self.modified = False
 
     @classmethod
-    def from_data(cls, value: Number, variable: Variable | None = None,
-                  power: No_RO | None = None) -> Group:
+    def from_data(cls, value: Number, variable: Variable | None = None, power: No_RO | None = None) -> Group:
         self = cls()
         self.variable = variable
         self.number = value or self.number

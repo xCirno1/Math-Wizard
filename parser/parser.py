@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from decimal import Decimal
+
 from .utility import match_parentheses
 from .errors import UnmatchedParenthesis
 from .checker import check_integrity
@@ -10,6 +12,7 @@ from .objects import (
     Variable,
     Operator,
     Equals,
+    Number,
     ParenthesizedGroup,
     LowerThan,
     LowerThanOrEquals,
@@ -47,6 +50,8 @@ def verify_type(character: str):
         return Character.greater_than_or_equals
     elif character == "!":
         return Character.exclamation
+    elif character == "E":  # Denoted with "E" (uppercase) to avoid ambiguity with the euler constant "e" (lowercase)
+        return Character.scientific
 
     return Character.variable
 
@@ -92,6 +97,7 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
     string = substitute_unnecessary_differ(string)
     check_integrity(string)
     groups, last__object, group, jump_to, after_decimal, group_is_parent = [], last_object, provided_group or Group(), start_from, False, False
+    scientific_value = None
     for index, char in enumerate(string):
         if jump_to:
             if index == jump_to:
@@ -105,17 +111,36 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
         if __type is Character.decimal:
             after_decimal = True
         elif __type is Character.digit:
+            if last__object is Character.scientific:
+                groups.append(Operator("*"))
+                group = Group()  # Create empty group to convert from E to "* 10^n"
+                group.number = Number.from_data(value=Decimal("10"))
+                i, rest = parse_single_group(string[index:])
+                scientific_value = "+" if scientific_value is None else scientific_value
+                group.power = [Group.from_value(Decimal(scientific_value + rest))]
+                jump_to, scientific_value = index + i, None
+                # Make this a parent group to not make problems with PEMDAS operation
+                groups.append(ParenthesizedGroup([groups.pop(-2), groups.pop(-1), group]))
+                group = Group()
+                last__object = Character.digit
+                continue
+
             group._is_base = False  # This is for the number 0, so the parser doesn't see it as a base group
             last__object = Character.digit
             if after_decimal:
                 group.number.append_digit(char, decimal=True)
                 continue
-            if not group.power:
+            if not group.power and last__object is not Character.scientific:
                 group.number.append_digit(char)
         else:
             after_decimal = False
 
         if __type is Character.integrity:  # Remove ambiguity between negative and subtraction
+            if last__object is Character.scientific:
+                scientific_value = "-"
+                continue
+            if groups and isinstance(groups[-1], ParenthesizedGroup):
+                groups.append(Operator("+"))
             if last__object not in (Character.operator, Integrity.negative):  # We need to create a new group object
                 if not group._is_base:
                     groups.append(group)
@@ -151,6 +176,11 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
             raise UnmatchedParenthesis(index + 1, is_closing_parenthesis=True)
 
         elif __type is Character.operator:
+            if last__object is Character.scientific and char == "+":
+                scientific_value = "+"
+                continue
+            elif last__object is Character.scientific and char != "+":
+                raise TypeError(f"Unsupported operator {char} after scientific notation E.")
             last__object = Character.operator
             if not group._is_base:
                 groups.append(group)
@@ -178,6 +208,10 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
                 groups.append(group)
             groups.append(entry[__type](char))
             group = Group()
+
+        elif __type is Character.scientific:
+            last__object = Character.scientific
+            groups.append(group)
 
     if not group._is_base:
         groups.append(group)

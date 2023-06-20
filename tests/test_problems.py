@@ -14,7 +14,7 @@ def test_main(number, problem):
     if isinstance(solved, bool):
         result = str(solved) == answer.strip()
     elif isinstance(solved, (float, Decimal, int)):
-        result = solved == Decimal(answer[:-1])
+        result = solved == Decimal(answer.strip())
     else:
         raise NotImplementedError
 
