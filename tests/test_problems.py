@@ -1,5 +1,5 @@
 import pytest
-
+import re
 import solver
 
 from decimal import Decimal
@@ -8,15 +8,15 @@ problems = list(enumerate([x for x in open(r"tests/test_problems.txt", encoding=
 
 
 @pytest.mark.parametrize("number, problem", problems)
-def test_main(number, problem):
-    problem, answer = problem.split("==")
+def test_main(number, problem: str):
+    problem, answer = re.match("(.+)==(.+)", problem.replace(" ", "")).groups()
     solved = solver.solve(problem)
-    if isinstance(solved, bool):
-        result = str(solved) == answer.strip()
-    elif isinstance(solved, (float, Decimal, int)):
-        result = solved == Decimal(answer.strip())
+    if isinstance(solved.other_value, bool):
+        result = str(solved.other_value) == answer.strip()
+    elif isinstance(solved.other_value, (float, Decimal, int)):
+        result = solved.other_value == Decimal(answer.strip())
     else:
         raise NotImplementedError
 
-    error_message = f"{number} | {problem} = {solved} ❌ [Expected answer: {answer[:-1]}]"
+    error_message = f"{number} | {problem}, got {solved} ❌ [Expected answer: {answer.strip()}]"
     assert result, error_message

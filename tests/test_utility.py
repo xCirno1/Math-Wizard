@@ -13,4 +13,4 @@ test_data = [
 
 @pytest.mark.parametrize("string", test_data)
 def test_main(string):
-    assert parser.groups_to_string(parser.parse_group(string)) == string
+    assert parser.utility.gts(parser.parse_group(string)) == string

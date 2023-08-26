@@ -1,10 +1,11 @@
-from typing import TypeVar
+from typing import TypeVar, TypeAlias
 
-from parser import Operator, Group, ParenthesizedGroup, RelationalOperator, Fraction
+from parser.objects import Operator, Group, ParenthesizedGroup, RelationalOperator, Fraction
 
 T_RO = TypeVar('T_RO', bound=RelationalOperator)
 
-mul_and_div = [Operator("*"), Operator("/")]
-No_RO = list[Group | Operator | ParenthesizedGroup | Fraction]
-CompleteEquation = list[Group | Operator | T_RO | ParenthesizedGroup | Fraction]
-Maybe_RO = No_RO | CompleteEquation
+mul_and_div = [Operator.Mul, Operator.Div]
+No_RO: TypeAlias = list[Group | Operator | ParenthesizedGroup | Fraction]
+CompleteEquation: TypeAlias = list[Group | Operator | T_RO | ParenthesizedGroup | Fraction]
+Maybe_RO: TypeAlias = No_RO | CompleteEquation
+Tuple_NO_RO: TypeAlias = tuple[Group | Operator | ParenthesizedGroup | Fraction]

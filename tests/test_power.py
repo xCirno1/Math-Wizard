@@ -25,7 +25,7 @@ def test_long_and_parenthesized_power():
     assert group[2].number.integer == 18 and group[2].power == []
     assert group[3].number.is_negative and group[3].variable is None and group[3].number.integer == 3
     assert (group[4].number.integer == 4 and group[4].variable.name == "x" and group[4].power[0].number.integer == 5 and
-            group[4].power[1].number.integer == 2)
+           group[4].power[1].number.integer == 2)
 
 
 def test_different_variable_power():
@@ -75,13 +75,13 @@ def test_complex_power():
     assert group[1].power[0].number.integer == 2 and group[1].power[0].variable.name == "y" and not group[1].power[
         0].number.is_negative
     assert group[1].power[0].power[0].number.integer == 3 and group[1].power[0].power[0].variable is None and not \
-    group[1].power[0].power[0].number.is_negative
+           group[1].power[0].power[0].number.is_negative
     assert group[1].power[0].power[1].number.integer == 2 and group[1].power[0].power[1].variable is None and \
            group[1].power[0].power[1].number.is_negative
     assert group[1].power[1].number.integer == 4 and group[1].power[1].variable.name == "x" and not group[1].power[
         0].number.is_negative
     assert group[1].power[1].power[0].number.integer == 4 and group[1].power[1].power[0].variable is None and not \
-    group[1].power[1].power[0].number.is_negative
+           group[1].power[1].power[0].number.is_negative
 
 
 def test_complex_power_and_decimal():

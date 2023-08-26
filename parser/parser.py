@@ -23,35 +23,23 @@ from .objects import (
 
 
 def verify_type(character: str):
-    # TODO: Refactor using enum
     if character.isdigit():
         return Character.digit
-    elif character == "^":
-        return Character.power
-    elif character == "-":
-        return Character.integrity
-    elif character in "+/*":
-        return Character.operator
-    elif character in "()":
-        return Character.opening_parentheses if character == "(" else Character.closing_parentheses
-    elif character == ".":
-        return Character.decimal
-    elif character == "=":
-        return Character.equals
-    elif character == "≠":
-        return Character.not_equals
-    elif character == "<":
-        return Character.lower_than
-    elif character == ">":
-        return Character.greater_than
-    elif character == "≤":
-        return Character.lower_than_or_equals
-    elif character == "≥":
-        return Character.greater_than_or_equals
-    elif character == "!":
-        return Character.exclamation
-    elif character == "E":  # Denoted with "E" (uppercase) to avoid ambiguity with the euler constant "e" (lowercase)
-        return Character.scientific
+    match character:
+        case "^": return Character.power
+        case "-": return Character.integrity
+        case "+" | "/" | "*": return Character.operator
+        case "(" | ")": return Character.opening_parentheses if character == "(" else Character.closing_parentheses
+        case ".": return Character.decimal
+        case "=": return Character.equals
+        case "≠": return Character.not_equals
+        case "<": return Character.lower_than
+        case ">": return Character.greater_than
+        case "≤": return Character.lower_than_or_equals
+        case "≥": return Character.greater_than_or_equals
+        case "!": return Character.exclamation
+        # Denoted with "E" (uppercase) to avoid ambiguity with the euler constant "e" (lowercase)
+        case "E": return Character.scientific
 
     return Character.variable
 
@@ -82,7 +70,7 @@ def parse_single_group(string: str) -> tuple[int, str]:  # This is to get the su
     return len(string), string  # Until the end of the query
 
 
-def substitute_unnecessary_differ(string: str):
+def replace_to_valid_RO(string: str):
     _dict = {
         ">=": "≥",
         "<=": "≤",
@@ -93,9 +81,11 @@ def substitute_unnecessary_differ(string: str):
     return string
 
 
-def parse_group(string: str, provided_group: Group | None = None, last_object: object = None, groups_only: bool = False, start_from: int = 0):
-    string = substitute_unnecessary_differ(string)
-    check_integrity(string)
+def parse_group(string: str, provided_group: Group | None = None, last_object: object = None,
+                groups_only: bool = False, start_from: int = 0, _from_recursion: bool = False):
+    if not _from_recursion:  # Slight performance
+        string = replace_to_valid_RO(string)
+        check_integrity(string)
     groups, last__object, group, jump_to, after_decimal, group_is_parent = [], last_object, provided_group or Group(), start_from, False, False
     scientific_value = None
     for index, char in enumerate(string):
@@ -113,8 +103,7 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
         elif __type is Character.digit:
             if last__object is Character.scientific:
                 groups.append(Operator("*"))
-                group = Group()  # Create empty group to convert from E to "* 10^n"
-                group.number = Number.from_data(value=Decimal("10"))
+                group = Group.from_value(Decimal("10"))  # Create empty group to convert from E to "* 10^n"
                 i, rest = parse_single_group(string[index:])
                 scientific_value = "+" if scientific_value is None else scientific_value
                 group.power = [Group.from_value(Decimal(scientific_value + rest))]
@@ -153,7 +142,7 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
         elif __type is Character.power:
             last__object = Character.power
             i, rest = parse_single_group(string[index + 1:])
-            power = parse_group(rest, last_object=last__object, groups_only=groups_only)
+            power = parse_group(rest, groups_only=groups_only)
             if group_is_parent:
                 jump_to, groups[-1].power = index + 1 + i, power
             else:
@@ -163,7 +152,7 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
             if not group._is_base:
                 groups.append(group)
             i, rest = parse_single_group(string[index:])
-            content = parse_group(rest, last_object=last__object, groups_only=groups_only)
+            content = parse_group(rest, groups_only=groups_only)
             par = ParenthesizedGroup(content)
             if last__object is Integrity.negative:
                 par.is_negative = group.number.is_negative
@@ -206,7 +195,7 @@ def parse_group(string: str, provided_group: Group | None = None, last_object: o
             }
             if not group._is_base:
                 groups.append(group)
-            groups.append(entry[__type](char))
+            groups.append(entry[__type])
             group = Group()
 
         elif __type is Character.scientific:
