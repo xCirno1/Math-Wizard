@@ -1,123 +1,98 @@
-import typing
-
 from decimal import Decimal
+from typing import cast
 
-from parser import Group, Operator, ParenthesizedGroup, Number
-from . import datatype
+from parser.objects import Group, Operator, Fraction, ParenthesizedGroup, Number
+from parser.utility import gts, truncate_trailing_zero
 
-
-class Positions:
-    def __init__(self, parsed_groups: list[Group | Operator | ParenthesizedGroup]):
-        self.groups = parsed_groups
-        self.parent_loc = []
-        self.operators = {}
-        self.existing_powers = []
-
-    def get_mul_and_div_pos(self):
-        mul, div = self.operators.get(Operator("*"), []), self.operators.get(Operator("/"), [])
-
-        mul_and_div = {**{i: Operator("*") for i in mul}, **{i: Operator("/") for i in div}}
-        return {k: v for k, v in sorted(mul_and_div.items())}
-
-    def get_add_pos(self):
-        return self.operators.get(Operator("+"), [])
-
-    def update_data(self, parsed_groups: list[Group | Operator | ParenthesizedGroup]):
-        self.parent_loc, self.operators, self.existing_powers = get_PEMDAS_positions(parsed_groups)
-
-    @classmethod
-    def from_data(cls, parsed_groups: list[Group | Operator | ParenthesizedGroup]):
-        self = cls(parsed_groups)
-        self.parent_loc, self.operators, self.existing_powers = get_PEMDAS_positions(parsed_groups)
-        return self
+from .core import Positions
+from .datatype import No_RO
+from .logging import _log
 
 
-def create_new_group(rv1: Decimal | int, rv2: Decimal | int | None = None, operator: Operator | None = None, power = None): # TODO: Awaiting hints
-    if rv2 is None and operator is None:
-        result = rv1
+def convert_fraction_to_division(positions: Positions) -> No_RO:
+    new = []
+    for group in positions.groups:
+        if isinstance(group, Fraction):
+            new += group.numerator + [Operator.Div] + group.denominator
+            continue
+        new.append(group)
+    return new
+
+
+def create_new_group(v1: Decimal, v2: Decimal | None = None, operator: Operator | None = None, power: No_RO | None = None):
+    if v2 is None and operator is None:
+        result = v1
     elif operator is None:
-        raise TypeError("Parameter 'rv2' must not given if parameter 'operator' is not given.")
-    elif rv2 is None:
-        raise TypeError("Parameter 'operator' must not given if parameter 'rv2' is not given.")
+        raise TypeError("Parameter 'rv2' must not be given if parameter 'operator' is not given.")
+    elif v2 is None:
+        raise TypeError("Parameter 'operator' must not be given if parameter 'rv2' is not given.")
     else:
-        if operator.symbol == "*":
-            result = rv1 * rv2
-        elif operator.symbol == "/":
-            result = rv1 / rv2
-        elif operator.symbol == "+":
-            result = rv1 + rv2
-        else:
-            raise TypeError("Unsupported operator.")
+        match operator.symbol:
+            case "*": result = v1 * v2
+            case "/": result = v1 / v2
+            case "+": result = v1 + v2
+            case _: raise TypeError("Unsupported operator.")
     try:
-        whole, dec = str(result).split(".")
+        whole, dec = f"{result.normalize():f}".split(".")
     except ValueError:
-        whole, dec = str(result), 0
-    num = Number.from_data(value=abs(int(whole)), decimal=f"0.{dec}", is_negative=whole[0] == "-")
+        whole, dec = str(truncate_trailing_zero(result)), 0
+    num = Number.from_data(value=abs(Decimal(whole)), decimal=f"0.{dec}", is_negative=whole[0] == "-")
     group = Group.from_data(num)
     if power is not None:
         group.power = power
     return group
 
 
-def get_PEMDAS_positions(parsed_group: list[Group | Operator | ParenthesizedGroup]) -> tuple[list[int], dict[Operator, list[int]], list[int]]:
-    operator_positions = {}
-    parenthesized_group_positions = []
-    available_powers = []
-    for index, group in enumerate(parsed_group):
-        if isinstance(group, Operator):
-            operator_positions[group] = operator_positions.get(group, []) + [index]
-        elif isinstance(group, ParenthesizedGroup):
-            parenthesized_group_positions.append(index)
-            if group.power:
-                available_powers.append(index)
-        elif isinstance(group, Group):
-            if group.power:
-                available_powers.append(index)
-    return parenthesized_group_positions, operator_positions, available_powers
-
-
-def combine_groups(positions, parsed_groups, operator):
-    if operator == datatype.mul_and_div:
-        index, operator = list(positions.get_mul_and_div_pos().items())[0]
-    elif operator == Operator("+"):
-        index = positions.get_add_pos()[0]
+def combine_groups(positions: Positions, parsed_groups: No_RO, is_addition: bool):
+    # If is_addition is True, Operator will be "+" else it is mul_and_div
+    if not is_addition:
+        index, operator = list(positions.get_mul_div_pos().items())[0]
+    elif is_addition:
+        operator = Operator.Add
+        index = positions.operators[operator][0]
     else:
         raise NotImplementedError
-    before = typing.cast(Group, parsed_groups[index - 1]).get_real_value()
-    after = typing.cast(Group, parsed_groups[index + 1]).get_real_value()
-    parsed_groups.insert(index - 1, create_new_group(before[-1], after[-1], operator))
+    before = cast(Group, parsed_groups[index - 1]).get_value()
+    after = cast(Group, parsed_groups[index + 1]).get_value()
+    parsed_groups.insert(index - 1, create_new_group(before, after, operator))
     del parsed_groups[index:index + 3]
 
 
-def calculate_group_power(group: Group, calculated_power) -> int | Decimal:
-    rv = group.get_real_value()[-1]
-    return -(rv ** calculated_power) if rv < 0 else (rv ** calculated_power)
-
-
-def solve_basic(parsed_groups: list[Group | Operator | ParenthesizedGroup]) -> Decimal | int:
-    positions = Positions.from_data(parsed_groups)
-    parenthesized_groups, operators = positions.parent_loc, positions.operators
-    for i in parenthesized_groups:  # The index here is static, so we don't need to re-calculate it
+def solve_basic(parsed_groups: No_RO) -> Decimal:
+    positions = Positions(parsed_groups)
+    if positions.fractions:
+        parsed_groups = convert_fraction_to_division(positions)
+    for i in positions.parent_loc:  # The index here is static, so we don't need to re-calculate it
         if isinstance(par := parsed_groups[i], ParenthesizedGroup):  # Type checking purposes
-            power = par.power
             result = solve_basic(par.groups)
-            parsed_groups[i] = create_new_group(Decimal(-result if par.is_negative else result), power=power)
+            if par.power:  # We handle powers in PG differently from normal Group
+                result = cast(Group, par.groups[0]).get_value() ** solve_basic(par.power)
+                par.power = []
+            parsed_groups[i] = create_new_group(Decimal(-result if par.is_negative else result), power=par.power)
+    _log.info("Finished calculating parentheses, got '%s'", gts(parsed_groups))
 
     positions.update_data(parsed_groups)
+
     for i in positions.existing_powers:
         if isinstance((group := parsed_groups[i]), Group):
-            result = solve_basic(group.power)
-            parsed_groups[i] = create_new_group(calculate_group_power(group, result))
+            power = solve_basic(group.power)
+            op = -1 if group.number.is_negative else 1
+            parsed_groups[i] = create_new_group(op * abs(group.get_value()) ** power)
+    _log.info("Finished calculating powers, got '%s'", gts(parsed_groups))
 
-    for _ in positions.get_mul_and_div_pos():
+    for _ in positions.operators.get(Operator.Mul, []) + positions.operators.get(Operator.Div, []):
         positions.update_data(parsed_groups)
-        combine_groups(positions, parsed_groups, datatype.mul_and_div)
+        combine_groups(positions, parsed_groups, is_addition=False)
+    _log.info("Finished calculating multiplies and divisions, got '%s'", gts(parsed_groups))
 
-    for _ in positions.get_add_pos():
+    for _ in positions.operators.get(Operator.Add, []):
         positions.update_data(parsed_groups)
-        combine_groups(positions, parsed_groups, Operator("+"))
+        combine_groups(positions, parsed_groups, is_addition=True)
+    _log.info("Finished calculating additions and subtractions, got '%s'", gts(parsed_groups))
 
     if len(parsed_groups) == 1:
-        return typing.cast(Group, parsed_groups[0]).get_real_value()[-1]
+        return cast(Group, parsed_groups[0]).get_value()
+    elif not len(parsed_groups):  # Empty result
+        return None  # type: ignore  # for direct call on solve_basic
 
     raise NotImplementedError("There's a bug here or the input is invalid")
