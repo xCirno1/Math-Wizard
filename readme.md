@@ -5,21 +5,29 @@ Welcome to Math Wizard, a project designed to ensure precise and accurate mathem
 Currently, Math Wizard is not available on PyPI (*yet). To get started, simply clone the project by running the following command: `git clone https://github.com/xCirno1/Math-Wizard`
 
 ## Basic Example
+- - - -
+* #### As a calculator
 ```python
 import solver
 
 # Let's try to calculate triangle area with a height of 5
-#  and base length of 10
-problem = "1/2 * 10 * 5"
-
-answer = solver.solve(problem)
+# and base length of 10
+answer = solver.solve("1/2 * 10 * 5")
 print(answer)  # Prints 25
+```
+* #### As a math solver
+```python
+import solver
+
+answer = solver.solve("4x + 3 = 19")
+print(answer.x)  # Prints 4
 ```
 
 ## Features
 - Parsing problems and equations
 - Safe calculation without the usage of `eval` or `exec`
-- Basic calculation (PEMDAS problem)
+- Basic arithmetics calculation (PEMDAS problem)
+- Solving linear algebra (1 variable)
 
 ## How it works
 Math Wizard operates by accepting problems and equations as strings and using its own algorithm to solve them. Here's a breakdown of the process:
