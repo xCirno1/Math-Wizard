@@ -142,7 +142,6 @@ class Result:
 
     def __getattr__(self, item):
         if len(item) != 1:  # It's not a valid variable
-            print(item)
             return self.__getattribute__(item)
         variable = [self.variables_map[i] for i in self.variables_map if i.name == item]
         return None if not variable else variable[0]
@@ -151,3 +150,7 @@ class Result:
         if isinstance(self.other_value, bool) or self.other_value is not None:
             return str(self.other_value)
         return str(self.variables_map or "<Empty Result>")
+
+    def to_decimal(self) -> Decimal | None:
+        # Converts Result instance to a Decimal if applicable
+        return self.other_value if isinstance(self.other_value, Decimal) else None

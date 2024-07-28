@@ -5,7 +5,6 @@ Welcome to Math Wizard, a project designed to ensure precise and accurate mathem
 Currently, Math Wizard is not available on PyPI (*yet). To get started, simply clone the project by running the following command: `git clone https://github.com/xCirno1/Math-Wizard`
 
 ## Basic Example
-- - - -
 * #### As a calculator
 ```python
 import solver

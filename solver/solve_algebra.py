@@ -167,14 +167,14 @@ def get_common_factors(groups: No_RO, highest: bool = True) -> int | list[int]:
         if isinstance(group, ParenthesizedGroup):
             factors += get_common_factors(group.groups, highest=False)
         elif isinstance(group, Group):
+            if groups[index - 1] == Operator.Mul:  # Will not raise IndexError because last group shouldn't be operator
+                continue  # Don't increment checked_group for chained multiplications
             try:
                 # Maybe deal common factors differently for Groups with exponent
                 # For example 25 ^ 25 = 625 but there's 125 as a factor of 625 which isn't a factor of 25
                 factors += group.number.factors
             except ValueError:
                 return 1 if highest else [1]
-            if groups[index - 1] == Operator.Mul:  # Will not raise IndexError because last group shouldn't be operator
-                continue  # Don't increment checked_group for chained multiplications
         elif isinstance(group, Fraction):
             factors += get_common_factors(group.numerator, highest=False)
         else:  # Operator
@@ -284,8 +284,8 @@ def divide_both_side(groups: CompleteEquation, divisor: int | None = None) -> Co
     if divisor is None:
         try:
             divisor = max([item for item, count in Counter(c_factors).items() if count == 2])
-        except ValueError:  # That means common factor count of one of the sides is 0
-            divisor = 1
+        except ValueError:  # That means common factor count of one of the sides is 0, nothing to divide with
+            return groups
     result: CompleteEquation = divide_all(lhs, divisor) + [Equals] + divide_all(rhs, divisor)
     _log.info("Finished dividing groups with similar coefficient (%s), got '%s'", divisor, gts(result))
 
@@ -315,6 +315,8 @@ def multiply_all(groups: CompleteEquation | No_RO, multiplier: int | Decimal) ->
     # Currently only works for non-variable multiplier
     is_on_chain = False
     new = []
+    if multiplier == 0:
+        return [Group()]
     for group in groups:
         if isinstance(group, Group):
             if not is_on_chain:  # For example: 5x * 3 * 2 (mult=3) should be treated as 15x * 3 * 2, not 15x * 9 * 6
@@ -440,26 +442,46 @@ def side_equals_zero(positions: Positions) -> tuple[bool, No_RO | None]:  # Retu
 def clean_parenthesized_groups(positions: Positions) -> CompleteEquation:
     new: CompleteEquation = []
     index = -1
+
     for parent in positions.groups:
         index += 1
         if isinstance(parent, ParenthesizedGroup):
+            if parent.power:
+                raise NotImplementedError("Powers are not implemented yet.")
             if parent.groups:
                 parent.groups = simplify_side(Positions(parent.groups))
             before = positions.groups[index - 1]
+            _next = positions.groups[index + 1] if index + 1 < len(positions.groups) else None
             if parent.is_negative:  # If negative, instantly multiply everything inside PG
-                for group_inside in parent.groups:  # TODO: Implement chain multiplication here
-                    if isinstance(group_inside, Group):  # TODO: Implement multiplying group by fraction or PG
-                        group_inside.number.is_negative = not group_inside.number.is_negative  # Same as `group.value * -1`
+                is_on_chain = False
+                for group_inside in parent.groups:
+                    if isinstance(group_inside, Group):
+                        if not is_on_chain:
+                            group_inside.number.is_negative = not group_inside.number.is_negative  # Same as `group.value * -1`
+                    if isinstance(group_inside, Operator):
+                        is_on_chain = group_inside == Operator.Mul
                     new.append(group_inside)
                 continue
-            # Check case for x(x + 3) or (x + 3)(x - 3) or x/3(x + 3), just skip
-            if index > 0 and before == Operator.Mul:
-                ...
-                # g_before = positions.groups[index - 2]  # Implement something here
-            elif index > 0 and before == Operator.Add or isinstance(before, RelationalOperator):
-                inside = calculate_non_groups_muls(parent.groups)
-                new.append(inside[0] if len(inside) == 1 else ParenthesizedGroup(inside))
-                continue
+            # For PG directly beside RO, just unpack the PG directly
+            if ro := positions.ro_positions:
+                ro_pos = ro[0][1]
+                if (index == 0 and ro_pos == 1) or (index == len(positions.groups) - 1 and ro_pos == index - 1):
+                    new += parent.groups
+                    continue
+            # CASE: PG between addition sign (Passive PG)
+            # There are 3 sub-cases:
+            #   1. After/before RO
+            #   2. At the start of the equation
+            #   3. At the middle of the equation, between 2 addition operator
+            if (index > 0 and before == Operator.Add) or index == 0:
+                if _next in (None, Operator.Add) or isinstance(_next, RelationalOperator):
+                    new += parent.groups
+                    continue
+            if before == Operator.Mul and _next not in (Operator.Mul, Operator.Div):
+                group_before = positions.groups[index - 2]
+                if not group_before.contains_variable:
+                    new += multiply_all(parent.groups, group_before.number.value)
+                    continue
             if len(parent.groups) == 1:
                 new.append(parent.groups[0])
                 continue

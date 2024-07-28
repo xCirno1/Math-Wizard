@@ -143,7 +143,6 @@ def determine_equation_type(groups: CompleteEquation, identity: EquationIdentity
             if groups[0].number.is_negative:
                 groups = divide_both_side(groups, -1)
             result = cast(tuple[Group, RelationalOperator, Group], tuple(divide_both_side(groups)))
-
             if (var_obj := (var_group := result[0]).variable) is None:
                 raise TypeError
             # In the format of n<variable> = <non-variable>, where n > 1 and non-variable != 0
@@ -163,4 +162,4 @@ def determine_equation_type(groups: CompleteEquation, identity: EquationIdentity
         except RecursionError:
             raise SolutionNotFoundError(solved) from None
 
-    raise NotImplementedError
+    raise NotImplementedError("Problem of that type is not supported yet.")

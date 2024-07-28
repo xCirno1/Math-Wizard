@@ -52,3 +52,8 @@ x + (5 * 3x) = -10,                                                   x = -5/8
 0x = 3,                                                               x = No Solution
 3x - 4 = 3x + 2,                                                      x = No Solution
 4x - x - 4 = 2x + x + 2,                                              x = No Solution
+
+# SIMPLIFYING PARENTHESIZED GROUPS
+-(12x * 3 - 2) = 6,                                                   x = -1/9
+-(12x * 3 - 2) = (2 + 3 * x),                                         x = 0
+(x + 1) + (x + 1) = 4,                                                x = 1
