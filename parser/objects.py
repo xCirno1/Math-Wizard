@@ -85,7 +85,7 @@ class Number:
     def from_data(cls, value: Decimal | int, decimal: Decimal | str = "0.0", is_negative: bool = False, self: Number | None = None) -> Number:
         self = self or cls()
         self.decimal = Decimal(decimal)
-        if isinstance(value, int) or (isinstance(value, Decimal) and value % 1 == 0):
+        if int(value) == value:
             self.integer = int(abs(value))
         else:
             digit, dec = str(value).split(".")

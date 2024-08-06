@@ -349,7 +349,7 @@ def simplify_side(positions: Positions):
     groups = calculate_non_groups_muls(groups)  # Multiply groups which can be multiplied
     positions.update_data(groups)
     groups = combine_similar_groups(groups)
-    groups = clean_parenthesized_groups(Positions(groups))  # TODO: Add some checks
+    groups = clean_parenthesized_groups(Positions(groups))
     _log.info("Combined all similar groups in side '%s', got '%s'.", initial, gts(groups))
     _log.info("END OF SIMPLIFYING SIDE '%s', got '%s'.", initial, gts(groups))
     return groups
@@ -442,9 +442,20 @@ def side_equals_zero(positions: Positions) -> tuple[bool, No_RO | None]:  # Retu
 def clean_parenthesized_groups(positions: Positions) -> CompleteEquation:
     new: CompleteEquation = []
     index = -1
-
+    pending_multiplier = False
     for parent in positions.groups:
         index += 1
+        # We need this check for cases such as "2(x + 3) * 3 = 4" which needs * 3 to be multiplied
+        # to the inner groups of PG. We do not want to have a skip index, so we do not perform
+        # lookaheads. Instead, we calculate it when we reach the Group(3).
+        if pending_multiplier and not isinstance(parent, Operator):
+            pending_multiplier = False
+            if isinstance(parent, Group):
+                if not parent.contains_variable:
+                    new.append(ParenthesizedGroup(groups=multiply_all(cast(ParenthesizedGroup, new[-2]).groups, parent.number.value)))
+                    del new[-2:-4:-1]  # Delete last 2 element before the last index since we should delete the multiplier
+                    continue
+
         if isinstance(parent, ParenthesizedGroup):
             if parent.power:
                 raise NotImplementedError("Powers are not implemented yet.")
@@ -469,7 +480,7 @@ def clean_parenthesized_groups(positions: Positions) -> CompleteEquation:
                     new += parent.groups
                     continue
             # CASE: PG between addition sign (Passive PG)
-            # There are 3 sub-cases:
+            # There are 3 subcases:
             #   1. After/before RO
             #   2. At the start of the equation
             #   3. At the middle of the equation, between 2 addition operator
@@ -477,14 +488,19 @@ def clean_parenthesized_groups(positions: Positions) -> CompleteEquation:
                 if _next in (None, Operator.Add) or isinstance(_next, RelationalOperator):
                     new += parent.groups
                     continue
-            if before == Operator.Mul and _next not in (Operator.Mul, Operator.Div):
-                group_before = positions.groups[index - 2]
-                if not group_before.contains_variable:
-                    new += multiply_all(parent.groups, group_before.number.value)
-                    continue
-            if len(parent.groups) == 1:
-                new.append(parent.groups[0])
-                continue
+            if before == Operator.Mul or _next == Operator.Mul:
+                if _next == Operator.Mul:
+                    pending_multiplier = True
+
+                if before == Operator.Mul:
+                    group_before = positions.groups[index - 2]
+                    if isinstance(group_before, Group) and not group_before.contains_variable:
+                        del new[-1:-3:-1]  # Delete last 2 element since we should delete the multiplier
+                        if _next == Operator.Mul:
+                            new.append(ParenthesizedGroup(groups=multiply_all(parent.groups, group_before.number.value)))
+                        else:
+                            new += multiply_all(parent.groups, group_before.number.value)
+                        continue
         new.append(parent)
     positions.update_data(new)
     _log.info("ParenthesizedGroups cleaned, got '%s'", gts(new))
