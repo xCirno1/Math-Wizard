@@ -1,4 +1,12 @@
 {
-    "ignore": ["tests"],
-    "pythonVersion": "3.10"
+    "include": ["solver", "parser"],
+    "pythonVersion": "3.10",
+    "reportDeprecated": "warning",
+    "reportUnusedFunction": "warning",
+    "reportUnusedVariable": "warning",
+    "reportDuplicateImport": "warning",
+    "reportUnnecessaryContains": "warning",
+    "reportUnnecessaryCast": "warning",
+    "reportUnnecessaryComparison": "warning",
+    "reportUnnecessaryTypeIgnoreComment": "warning"
 }
