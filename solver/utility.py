@@ -1,7 +1,7 @@
 from collections import Counter
 from typing import cast, TypeVar
 
-from parser.objects import Variable, Operator, ParenthesizedGroup, RelationalOperator, Fraction, Group
+from parser.objects import Variable, Operator, ParenthesizedGroup, RelationalOperator, Fraction, Group, Equals
 from parser.utility import gts
 
 from .logging import _log
@@ -132,34 +132,33 @@ def determine_equation_type(groups: CompleteEquation, identity: EquationIdentity
         return Result(all(cond))
 
     elif len(identity.variable_count) == 1 and identity.relational_operators:
-        from .solve_algebra import solve_algebra, divide_both_side
+        if identity.relational_operators[0][0] == Equals:
+            from .solve_algebra import solve_algebra, divide_both_side
 
-        _log.info("Identified as [BASIC ALGEBRA]")
-        _log.info("[START OF SOLVING ALGEBRA]")
-
-        # In the format of <variable> = <non-variable>
-        identity = get_equation_identity(groups)
-        if len(groups) == 3 and list(identity.variable_count.values())[0] == 1 and isinstance(groups[0], Group) and not identity.has_powers and not identity.parenthesized_groups:
-            if groups[0].number.is_negative:
-                groups = divide_both_side(groups, -1)
-            result = cast(tuple[Group, RelationalOperator, Group], tuple(divide_both_side(groups)))
-            if (var_obj := (var_group := result[0]).variable) is None:
-                raise TypeError
-            # In the format of n<variable> = <non-variable>, where n > 1 and non-variable != 0
-            if (non_var := result[2]).get_value() != 0 and var_group.number.value != 1:
-                try:
-                    fraction = Fraction(numerator=[non_var], denominator=[Group.from_value(var_group.get_value())])
-                except ZeroDivisionError:
-                    return Result({var_obj: NoSolution()})  # For `0x = <non-var>` cases
-                return Result({var_obj: fraction})
-            return Result({var_obj: non_var.get_value()})
-
-        solved = solve_algebra(convert_division_to_fraction(groups) if base else groups)
-        if isinstance(solved, Result):
-            return solved
-        try:
-            return determine_equation_type(solved)  # Keep recurring until it's found, otherwise, raise RecursionError
-        except RecursionError:
-            raise SolutionNotFoundError(solved) from None
+            _log.info("Identified as [BASIC ALGEBRA]")
+            _log.info("[START OF SOLVING ALGEBRA]")
+            # In the format of <variable> = <non-variable>
+            identity = get_equation_identity(groups)
+            if len(groups) == 3 and list(identity.variable_count.values())[0] == 1 and isinstance(groups[0], Group) and not identity.has_powers and not identity.parenthesized_groups:
+                if groups[0].number.is_negative:
+                    groups = divide_both_side(groups, -1)
+                result = cast(tuple[Group, RelationalOperator, Group], tuple(divide_both_side(groups)))
+                if (var_obj := (var_group := result[0]).variable) is None:
+                    raise TypeError
+                # In the format of n<variable> = <non-variable>, where n > 1 and non-variable != 0
+                if (non_var := result[2]).get_value() != 0 and var_group.number.value != 1:
+                    try:
+                        fraction = Fraction(numerator=[non_var], denominator=[Group.from_value(var_group.get_value())])
+                    except ZeroDivisionError:
+                        return Result({var_obj: NoSolution()})  # For `0x = <non-var>` cases
+                    return Result({var_obj: fraction})
+                return Result({var_obj: non_var.get_value()})
+            solved = solve_algebra(convert_division_to_fraction(groups) if base else groups)
+            if isinstance(solved, Result):
+                return solved
+            try:
+                return determine_equation_type(solved)  # Keep recurring until it's found, otherwise, raise RecursionError
+            except RecursionError:
+                raise SolutionNotFoundError(solved) from None
 
     raise NotImplementedError("Problem of that type is not supported yet.")
