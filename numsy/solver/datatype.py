@@ -1,6 +1,6 @@
 from typing import TypeVar, TypeAlias
 
-from parser.objects import Operator, Group, ParenthesizedGroup, RelationalOperator, Fraction
+from numsy.parser import Operator, Group, ParenthesizedGroup, RelationalOperator, Fraction
 
 T_RO = TypeVar('T_RO', bound=RelationalOperator)
 

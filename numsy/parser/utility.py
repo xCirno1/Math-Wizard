@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING
 from .objects import Number, Group, Variable, Operator, ParenthesizedGroup, RelationalOperator, Fraction
 
 if TYPE_CHECKING:
-    from solver.datatype import Maybe_RO
-    from solver.core import Result, NoSolution
+    from numsy.solver.datatype import Maybe_RO
+    from numsy.solver.core import Result, NoSolution
 
 
 VALID_OBJECTS = (Group, Operator, ParenthesizedGroup, RelationalOperator, Fraction)

@@ -1,11 +1,11 @@
-from parser import parse_group
-from solver.core import Result
-from parser.utility import gts
+from numsy.parser import parse_group
+from numsy.solver.core import Result
+from numsy.parser import gts
 
 from .utility import determine_equation_type, clean_equation
 from .datatype import CompleteEquation
 from .logging import set_log_equation, setup_log, _log
-from .matrices import Matrix, Identity, NormEnum
+from .matrices import *
 from .errors import *
 
 def solve(equation: CompleteEquation | str) -> Result:

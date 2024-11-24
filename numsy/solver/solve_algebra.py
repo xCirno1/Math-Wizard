@@ -3,8 +3,8 @@ from collections.abc import Iterable
 from decimal import Decimal
 from typing import overload, Literal, cast
 
-from parser.objects import Group, Operator, Equals, Number, ParenthesizedGroup, Fraction, RelationalOperator, Variable
-from parser.utility import gts
+from numsy.parser import Group, Operator, Equals, Number, ParenthesizedGroup, Fraction, RelationalOperator, Variable
+from numsy.parser import gts
 
 from .core import Positions, Result, TrueForAll
 from .datatype import No_RO, CompleteEquation

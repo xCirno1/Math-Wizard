@@ -1,6 +1,6 @@
 import pytest
 import re
-import solver
+from numsy import solver
 
 from decimal import Decimal
 

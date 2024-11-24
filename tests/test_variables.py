@@ -1,8 +1,8 @@
 import pytest
 import re
-import solver
+from numsy import solver
 
-from parser.utility import gts
+from numsy.parser import gts
 
 problems = list(enumerate([x for x in open(r"tests/test_variables.txt", encoding="UTF-8").readlines() if not x.startswith("#") and x != "\n"]))
 

@@ -1,8 +1,8 @@
 from collections import Counter
 from typing import cast, TypeVar
 
-from parser.objects import Variable, Operator, ParenthesizedGroup, RelationalOperator, Fraction, Group, Equals
-from parser.utility import gts
+from numsy.parser import Variable, Operator, ParenthesizedGroup, RelationalOperator, Fraction, Group
+from numsy.parser import gts
 
 from .logging import _log
 from .datatype import Maybe_RO, CompleteEquation

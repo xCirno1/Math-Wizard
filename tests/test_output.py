@@ -1,4 +1,4 @@
-import solver
+from numsy import solver
 
 
 def test_output_with_exponential_E():
