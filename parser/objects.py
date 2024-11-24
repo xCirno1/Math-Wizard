@@ -259,7 +259,7 @@ class RelationalOperator:
         return self.func(**kwargs)
 
     def __eq__(self, other):
-        return isinstance(other, self.__class__)
+        return isinstance(other, self.__class__) and self.symbol == other.symbol
 
     def __hash__(self):
         return hash(self.symbol)
