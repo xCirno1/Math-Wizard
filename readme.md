@@ -1,4 +1,4 @@
-# Math Wizard
+# NumSy
 Welcome to NumSy, a project designed to ensure precise and accurate mathematical calculations. This is an independent project, which eliminates the need for any additional libraries. Our primary goal is to provide users with an easy-to-use platform for solving math problems. We highly welcome your feedback, suggestions, and contributions, so please don't hesitate to create issues or pull requests.
 
 ## Installation
@@ -49,9 +49,9 @@ print(Matrix(m1).adjugate().matrix)
 - Matrices
 
 ## How it works
-Math Wizard operates by accepting problems and equations as strings and using its own algorithm to solve them. Here's a breakdown of the process:
-1. Math Wizard receives the problem or equation as a string.
+NumSy operates by accepting problems and equations as strings and using its own algorithm to solve them. Here's a breakdown of the process:
+1. NumSy receives the problem or equation as a string.
 2. It parses the string character by character, identifying the type of each character (operator, digit, etc.).
-3. Once the parsing phase is complete, Math Wizard determines the problem's identity, such as the number of variables or whether it's an equation.
+3. Once the parsing phase is complete, NumSy determines the problem's identity, such as the number of variables or whether it's an equation.
 4. It then categorizes the problem type, whether it falls under Basic PEMDAS, Quadratic Equation, or other categories.
-5. Using specific functions bound to each problem type, Math Wizard proceeds to solve the problem.
+5. Using specific functions bound to each problem type, NumSy proceeds to solve the problem.
