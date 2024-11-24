@@ -7,6 +7,20 @@ from parser.objects import Group, Operator, ParenthesizedGroup, RelationalOperat
 from parser.utility import truncate_trailing_zero
 
 
+if TYPE_CHECKING:
+    from .datatype import Maybe_RO, No_RO, Tuple_NO_RO
+
+    RETURN: TypeAlias = tuple[
+        list[int],  # ParenthesizedGroup Locations
+        dict[Operator, list[int]],  # Operator Locations
+        list[int],  # Power-existing Group/ParenthesizedGroup locations
+        dict[Fraction, int],  # Fraction locations
+        list[tuple[RelationalOperator, int]],  # Relational operator locations
+        dict[Group, list[int]]  # Unique Variable group locations
+    ]
+    VAR_VALUE: TypeAlias = Decimal | Fraction | Tuple_NO_RO | "NoSolution" | "TrueForAll" | "Range"
+
+
 class NoSolution:
     def __eq__(self, other):
         return isinstance(other, NoSolution)
@@ -19,6 +33,8 @@ class NoSolution:
 
 
 class TrueForAll:
+    """Construct a TrueForAll object where x is True (x ∈ R)."""
+
     def __init__(self, var_name: str):
         self.name = var_name
 
@@ -32,18 +48,20 @@ class TrueForAll:
         return f"True for all {self.name}"
 
 
-if TYPE_CHECKING:
-    from .datatype import Maybe_RO, No_RO, Tuple_NO_RO
+class Range:
+    """Construct a Range object with a given lower bound (lb), upper bound (ub), lb is equal, and ub is equal."""
+    def __init__(self, var_name: str, lb: int, ub: int, lb_eq: bool, ub_eq) -> None:
+        self.name = var_name
+        self.lb = lb
+        self.ub = ub
+        self.lb_eq = lb_eq
+        self.ub_eq = ub_eq
 
-    RETURN: TypeAlias = tuple[
-        list[int],  # ParenthesizedGroup Locations
-        dict[Operator, list[int]],  # Operator Locations
-        list[int],  # Power-existing Group/ParenthesizedGroup locations
-        dict[Fraction, int],  # Fraction locations
-        list[tuple[RelationalOperator, int]],  # Relational operator locations
-        dict[Group, list[int]]  # Unique Variable group locations
-    ]
-    VAR_VALUE: TypeAlias = Decimal | Fraction | Tuple_NO_RO | NoSolution | TrueForAll
+    def __str__(self) -> str:
+        ub_sym = "≤" if self.ub_eq else "<"
+        lb_sym = "≤" if self.lb_eq else "<"
+
+        return f"{self.lb} {lb_sym} {self.name} {ub_sym} {self.ub}"
 
 
 class Positions:
