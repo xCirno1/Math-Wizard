@@ -1,3 +1,17 @@
+[project]
+name = "numsy"
+version = "0.1.0"
+description = "Providing a powerful and accurate Math Solver."
+readme = "readme.md"
+authors = [{ name = "xCirno1", email = "xcirno6@gmail.com" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+]
+keywords = ["feed", "reader", "tutorial"]
+requires-python = ">= 3.10"
+
 [tool.pyright]
 include = [
     "parser",
@@ -10,3 +24,6 @@ pythonVersion = "3.10"
 pythonpath = [
   "."
 ]
+
+[tool.setuptools]
+py-modules = []
