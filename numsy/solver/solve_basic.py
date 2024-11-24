@@ -1,8 +1,8 @@
 from decimal import Decimal
 from typing import cast
 
-from parser.objects import Group, Operator, Fraction, ParenthesizedGroup, Number
-from parser.utility import gts, truncate_trailing_zero
+from numsy.parser import Group, Operator, Fraction, ParenthesizedGroup, Number
+from numsy.parser import gts, truncate_trailing_zero
 
 from .core import Positions
 from .datatype import No_RO

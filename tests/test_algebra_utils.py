@@ -1,7 +1,7 @@
-from parser import parse_group
-from parser.utility import gts
+from numsy.parser import parse_group
+from numsy.parser import gts
 
-from solver.solve_algebra import divide_all
+from numsy.solver.solve_algebra import divide_all
 
 
 def test_divide_all():

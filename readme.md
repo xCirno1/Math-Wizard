@@ -25,8 +25,9 @@ print(answer.x)  # Prints 4
 ```
 
 * #### Solving Matrix
+
 ```python
-from solver.matrices import Matrix
+from numsy.solver import Matrix
 
 m1 = [
     [1, 2, 3],

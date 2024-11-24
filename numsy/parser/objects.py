@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, ClassVar
 from decimal import Decimal
 
 if TYPE_CHECKING:
-    from solver.datatype import No_RO
+    from numsy.solver.datatype import No_RO
 
 
 class Character:
@@ -219,7 +219,7 @@ class Group:
         return self.variable is None and self.get_value() == 0  # Maybe remove `self.variable is None` check
 
     def __mul__(self, second: Group):
-        from solver.solve_basic import solve_basic
+        from numsy.solver.solve_basic import solve_basic
 
         if not isinstance(second, Group):
             raise TypeError(f"Cannot multiply `Group` with {second.__class__}.")

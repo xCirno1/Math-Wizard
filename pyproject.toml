@@ -11,10 +11,17 @@ classifiers = [
 ]
 requires-python = ">= 3.10"
 
+[project.urls]
+Documentation = "https://github.com/xCirno1/numsy"
+Issues = "https://github.com/xCirno1/numsy/issues"
+
+[tool.setuptools.packages.find]
+include = ["numsy*"]
+namespaces = false
+
 [tool.pyright]
 include = [
-    "parser",
-    "solver"
+    "numsy",
 ]
 
 pythonVersion = "3.10"

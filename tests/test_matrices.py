@@ -1,7 +1,7 @@
 import pytest
 
-from solver.errors import NonInvertibleMatrixError
-from solver.matrices import Matrix, DimensionMismatch, NormEnum, Identity
+from numsy.solver.errors import NonInvertibleMatrixError
+from numsy.solver import Matrix, DimensionMismatch, NormEnum, Identity
 
 m0 = []
 

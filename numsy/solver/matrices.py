@@ -6,7 +6,7 @@ from math import sqrt
 from typing import Final, Literal, TypeAlias, Callable, overload
 
 
-from solver.errors import DimensionMismatch, NonInvertibleMatrixError
+from numsy.solver.errors import DimensionMismatch, NonInvertibleMatrixError
 
 MatrixBase: TypeAlias = list[list[float]]
 

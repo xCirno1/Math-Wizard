@@ -3,8 +3,8 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Mapping, TYPE_CHECKING, TypeAlias, cast
 
-from parser.objects import Group, Operator, ParenthesizedGroup, RelationalOperator, Number, Variable, Fraction
-from parser.utility import truncate_trailing_zero
+from numsy.parser import Group, Operator, ParenthesizedGroup, RelationalOperator, Number, Variable, Fraction
+from numsy.parser import truncate_trailing_zero
 
 
 if TYPE_CHECKING:

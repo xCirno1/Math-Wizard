@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import parser
+from numsy import parser
 
 from decimal import Decimal
 
