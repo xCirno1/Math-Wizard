@@ -1,7 +1,7 @@
 from collections import Counter
 from typing import cast, TypeVar
 
-from numsy.parser import Variable, Operator, ParenthesizedGroup, RelationalOperator, Fraction, Group
+from numsy.parser import Variable, Operator, ParenthesizedGroup, RelationalOperator, Fraction, Group, Equals
 from numsy.parser import gts
 
 from .logging import _log

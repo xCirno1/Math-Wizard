@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, ClassVar
 from decimal import Decimal
 
 if TYPE_CHECKING:
-    from .solver.datatype import No_RO
+    from numsy.solver.datatype import No_RO
 
 
 class Character:
